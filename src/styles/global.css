@@ -1,0 +1,280 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: 'Bebas Neue', sans-serif;
+
+  --color-bg: #020806;
+  --color-bg-panel: rgba(2, 10, 5, 0.95);
+  --color-bg-hover: rgba(2, 16, 6, 1);
+  --color-border: #0e2a14;
+  --color-border-hover: #1a4a1a;
+  --color-text: #4ade80;
+  --color-text-dim: #0e3a14;
+  --color-text-mid: #1a5a1a;
+  --color-text-bright: #c4ffc4;
+  --color-accent-warn: #f59e0b;
+  --color-accent-danger: #ef4444;
+  --color-accent-info: #60a5fa;
+  --color-accent-purple: #c084fc;
+
+  --color-stat-mil: #ff6666;
+  --color-stat-eco: #66ff99;
+  --color-stat-dip: #66aaff;
+  --color-stat-inf: #cc88ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: #020806; }
+::-webkit-scrollbar-thumb { background: #0e2a14; }
+
+body {
+  font-family: var(--font-mono);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* CRT Effects */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
+  );
+}
+
+.crt-flicker {
+  animation: flicker 8s infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.96; }
+  94% { opacity: 1; }
+  97% { opacity: 0.98; }
+  98% { opacity: 1; }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.spin {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border: 1px solid #0e2a14;
+  border-top-color: #4ade80;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Typewriter effect for streaming text */
+.typewriter {
+  overflow: hidden;
+  border-right: 2px solid #4ade80;
+  animation: blink-caret 0.75s step-end infinite;
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent; }
+  50% { border-color: #4ade80; }
+}
+
+/* Stat bars */
+.stat-bar {
+  height: 2px;
+  background: #0a1f0a;
+  border-radius: 1px;
+  margin-top: 3px;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.5s ease;
+}
+
+/* Faction row */
+.faction-row {
+  cursor: pointer;
+  padding: 7px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 1px;
+  transition: all 0.12s;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+
+.faction-row:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-hover);
+}
+
+.faction-row.selected {
+  border-color: #4ade80;
+  background: rgba(74, 222, 128, 0.07);
+}
+
+/* Action button */
+.action-btn {
+  cursor: pointer;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 1px;
+  transition: all 0.12s;
+  background: var(--color-bg-panel);
+  margin-bottom: 5px;
+}
+
+.action-btn:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-hover);
+}
+
+.action-btn.selected {
+  border-color: var(--color-accent-warn);
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.action-btn.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* News item */
+.news-item {
+  padding: 9px 11px;
+  border-left: 2px solid var(--color-border);
+  margin-bottom: 6px;
+  font-size: 10px;
+  line-height: 1.68;
+}
+
+.news-item.headline { border-left-color: var(--color-accent-warn); background: rgba(245, 158, 11, 0.04); }
+.news-item.outcome { border-left-color: #4ade80; }
+.news-item.response { border-left-color: #a855f7; }
+.news-item.reaction { border-left-color: #3b82f6; }
+.news-item.event { border-left-color: var(--color-border); }
+.news-item.system { border-left-color: #4ade80; }
+.news-item.error { border-left-color: var(--color-accent-danger); }
+.news-item.crisis { border-left-color: #f97316; background: rgba(249, 115, 22, 0.06); }
+
+/* Execute button */
+.exec-btn {
+  padding: 10px 22px;
+  background: var(--color-bg-panel);
+  border: 1px solid #4ade80;
+  color: #4ade80;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 1px;
+}
+
+.exec-btn:hover:not(:disabled) {
+  background: rgba(74, 222, 128, 0.1);
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.25);
+}
+
+.exec-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Faction select card */
+.faction-card {
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-panel);
+  border-radius: 1px;
+  padding: 14px;
+  transition: all 0.2s;
+}
+
+.faction-card:hover {
+  border-color: var(--fc, #4ade80);
+  background: var(--color-bg-hover);
+  box-shadow: 0 0 24px var(--fg, rgba(74, 222, 128, 0.16));
+  transform: translateY(-2px);
+}
+
+/* Tension meter colors */
+.tension-stable { color: #4ade80; }
+.tension-tense { color: #fbbf24; }
+.tension-crisis { color: #f97316; }
+.tension-brink { color: #ef4444; }
+.tension-war { color: #dc2626; animation: pulse 0.5s infinite; }
+
+/* Coalition panel */
+.coalition-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 1px;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+/* Crisis modal overlay */
+.crisis-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Tutorial tooltip */
+.tutorial-tooltip {
+  position: absolute;
+  background: rgba(2, 10, 5, 0.98);
+  border: 1px solid #4ade80;
+  border-radius: 2px;
+  padding: 12px 16px;
+  max-width: 280px;
+  font-size: 10px;
+  line-height: 1.6;
+  z-index: 500;
+  box-shadow: 0 0 20px rgba(74, 222, 128, 0.15);
+}
+
+.tutorial-tooltip::before {
+  content: '▶ COMMAND BRIEFING';
+  display: block;
+  font-size: 7px;
+  letter-spacing: 0.3em;
+  color: var(--color-text-dim);
+  margin-bottom: 6px;
+}
