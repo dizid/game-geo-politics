@@ -7,11 +7,11 @@
   --color-bg: #020806;
   --color-bg-panel: rgba(2, 10, 5, 0.95);
   --color-bg-hover: rgba(2, 16, 6, 1);
-  --color-border: #0e2a14;
-  --color-border-hover: #1a4a1a;
+  --color-border: #1a4a24;
+  --color-border-hover: #2a6a3a;
   --color-text: #4ade80;
-  --color-text-dim: #0e3a14;
-  --color-text-mid: #1a5a1a;
+  --color-text-dim: #3a7a4a;
+  --color-text-mid: #5aaa6a;
   --color-text-bright: #c4ffc4;
   --color-accent-warn: #f59e0b;
   --color-accent-danger: #ef4444;
@@ -32,7 +32,7 @@
 
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: #020806; }
-::-webkit-scrollbar-thumb { background: #0e2a14; }
+::-webkit-scrollbar-thumb { background: #1a4a24; }
 
 body {
   font-family: var(--font-mono);
@@ -273,7 +273,7 @@ body {
 .tutorial-tooltip::before {
   content: '▶ COMMAND BRIEFING';
   display: block;
-  font-size: 7px;
+  font-size: 9px;
   letter-spacing: 0.3em;
   color: var(--color-text-dim);
   margin-bottom: 6px;

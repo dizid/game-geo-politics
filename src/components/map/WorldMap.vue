@@ -79,7 +79,7 @@ function getFaction(id: string): Faction | undefined {
       stroke="#1a4a1a" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.8" />
 
     <!-- Graticule label: equator -->
-    <text x="4" y="223" fill="#0e3a14" font-size="6" font-family="'IBM Plex Mono',monospace">EQ</text>
+    <text x="4" y="223" fill="#3a7a4a" font-size="8" font-family="'IBM Plex Mono',monospace">EQ</text>
 
     <!-- Map regions -->
     <g>
@@ -96,7 +96,7 @@ function getFaction(id: string): Faction | undefined {
     </g>
 
     <!-- Coordinate labels -->
-    <g fill="#0e3a14" font-size="5.5" font-family="'IBM Plex Mono',monospace" opacity="0.7">
+    <g fill="#3a7a4a" font-size="8" font-family="'IBM Plex Mono',monospace" opacity="0.8">
       <text x="4" y="10">90°N</text>
       <text x="4" y="117">45°N</text>
       <text x="4" y="230">0°</text>

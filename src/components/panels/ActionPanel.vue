@@ -50,7 +50,7 @@ function costColor(cost: number): string {
 <template>
   <div style="padding:6px;border-top:1px solid var(--color-border);">
     <!-- Header -->
-    <div style="font-size:7px;letter-spacing:0.22em;color:var(--color-text-dim);padding:4px 2px 6px;">
+    <div style="font-size:9px;letter-spacing:0.22em;color:var(--color-text-dim);padding:4px 2px 6px;">
       <span v-if="target">ACTIONS vs {{ target.name.toUpperCase() }}</span>
       <span v-else>SELECT TARGET FIRST</span>
     </div>
@@ -70,13 +70,13 @@ function costColor(cost: number): string {
         <!-- Icon + label -->
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:11px;">{{ action.icon }}</span>
-          <span style="font-size:8px;letter-spacing:0.12em;color:var(--color-text-bright);">
+          <span style="font-size:9px;letter-spacing:0.12em;color:var(--color-text-bright);">
             {{ action.label }}
           </span>
           <!-- Compound badge -->
           <span
             v-if="'components' in action"
-            style="font-size:6px;letter-spacing:0.1em;color:var(--color-accent-warn);border:1px solid var(--color-accent-warn);padding:1px 4px;"
+            style="font-size:8px;letter-spacing:0.1em;color:var(--color-accent-warn);border:1px solid var(--color-accent-warn);padding:1px 4px;"
           >
             COMPOUND
           </span>
@@ -86,7 +86,7 @@ function costColor(cost: number): string {
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
           <span
             v-if="cooldownRemaining(action.id as ActionId | CompoundActionId) > 0"
-            style="font-size:7px;color:var(--color-accent-danger);"
+            style="font-size:8px;color:var(--color-accent-danger);"
           >
             CD:{{ cooldownRemaining(action.id as ActionId | CompoundActionId) }}
           </span>
@@ -97,7 +97,7 @@ function costColor(cost: number): string {
       </div>
 
       <!-- Description -->
-      <div style="font-size:7px;color:var(--color-text-dim);margin-top:3px;line-height:1.5;">
+      <div style="font-size:9px;color:var(--color-text-dim);margin-top:3px;line-height:1.5;">
         {{ action.desc }}
       </div>
     </div>

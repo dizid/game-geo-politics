@@ -99,7 +99,7 @@ const bestPath = computed(() => {
         cursor:pointer;
         border-bottom:1px solid var(--color-border);
         font-family:var(--font-mono);
-        font-size:8px;
+        font-size:9px;
         letter-spacing:0.22em;
         color:var(--color-text-dim);
       "
@@ -118,13 +118,13 @@ const bestPath = computed(() => {
           <!-- Label + progress % -->
           <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
             <span
-              style="font-size:7px;letter-spacing:0.2em;"
+              style="font-size:9px;letter-spacing:0.2em;"
               :style="{ color: path.type === bestPath?.type ? '#fbbf24' : 'var(--color-text-dim)' }"
             >
               {{ path.label }}
               <span v-if="path.type === bestPath?.type" style="color:#fbbf24;"> ★</span>
             </span>
-            <span style="font-size:7px;color:var(--color-text-dim);">{{ Math.round(path.progress) }}%</span>
+            <span style="font-size:9px;color:var(--color-text-dim);">{{ Math.round(path.progress) }}%</span>
           </div>
 
           <!-- Progress bar -->
@@ -140,10 +140,10 @@ const bestPath = computed(() => {
 
           <!-- Requirements checklist -->
           <div v-for="req in path.requirements" :key="req.label" style="display:flex;align-items:center;gap:5px;margin-bottom:2px;">
-            <span style="font-size:7px;" :style="{ color: req.met ? '#4ade80' : '#0e3a14' }">
+            <span style="font-size:9px;" :style="{ color: req.met ? '#4ade80' : 'var(--color-text-dim)' }">
               {{ req.met ? '✓' : '○' }}
             </span>
-            <span style="font-size:7px;color:var(--color-text-dim);">
+            <span style="font-size:9px;color:var(--color-text-dim);">
               {{ req.label }} ({{ req.current }}/{{ req.target }})
             </span>
           </div>

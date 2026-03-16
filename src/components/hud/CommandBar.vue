@@ -46,14 +46,14 @@ function handleExecute(): void {
     gap:12px;
   ">
     <!-- Summary text -->
-    <div style="flex:1;font-size:9px;letter-spacing:0.18em;color:var(--color-text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
+    <div style="flex:1;font-size:10px;letter-spacing:0.18em;color:var(--color-text);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">
       <span v-if="loading" class="pulse">{{ summaryText }}</span>
       <span v-else>{{ summaryText }}</span>
     </div>
 
     <!-- Turn + AP display -->
     <div style="display:flex;gap:12px;flex-shrink:0;">
-      <span style="font-size:8px;color:var(--color-text-dim);letter-spacing:0.12em;">
+      <span style="font-size:9px;color:var(--color-text-dim);letter-spacing:0.12em;">
         T{{ gameStore.turn }}
       </span>
       <span style="font-size:8px;letter-spacing:0.12em;" :style="{ color: ap > 30 ? '#4ade80' : '#ef4444' }">

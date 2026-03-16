@@ -19,8 +19,7 @@ import type { CrisisEvent } from '../types/game'
 const gameStore = useGameStore()
 
 const phase = computed(() => gameStore.phase)
-const turn = computed(() => gameStore.turn)
-const showTutorial = computed(() => turn.value <= 3)
+const showTutorial = ref(true)
 
 // Crisis state — in a real game this comes from the narrative engine
 // Here we expose a ref that the engine layer can populate

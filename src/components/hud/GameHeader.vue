@@ -34,7 +34,7 @@ const power = computed(() => player.value ? calculatePower(player.value) : 0)
       <span style="font-family:var(--font-display);font-size:18px;letter-spacing:0.12em;color:var(--color-text);">
         GEO:CMD
       </span>
-      <span style="font-size:9px;color:var(--color-text-dim);letter-spacing:0.2em;">
+      <span style="font-size:10px;color:var(--color-text-dim);letter-spacing:0.2em;">
         TURN {{ turn }} · {{ year }}
       </span>
       <!-- Loading spinner -->
@@ -51,10 +51,10 @@ const power = computed(() => player.value ? calculatePower(player.value) : 0)
 
       <!-- Stat chips -->
       <div style="display:flex;gap:8px;">
-        <span style="font-size:8px;color:var(--color-stat-mil);">MIL:{{ player.mil }}</span>
-        <span style="font-size:8px;color:var(--color-stat-eco);">ECO:{{ player.eco }}</span>
-        <span style="font-size:8px;color:var(--color-stat-dip);">DIP:{{ player.dip }}</span>
-        <span style="font-size:8px;color:var(--color-stat-inf);">INF:{{ player.inf }}</span>
+        <span style="font-size:9px;color:var(--color-stat-mil);">MIL:{{ player.mil }}</span>
+        <span style="font-size:9px;color:var(--color-stat-eco);">ECO:{{ player.eco }}</span>
+        <span style="font-size:9px;color:var(--color-stat-dip);">DIP:{{ player.dip }}</span>
+        <span style="font-size:9px;color:var(--color-stat-inf);">INF:{{ player.inf }}</span>
       </div>
 
       <!-- Divider -->
@@ -65,7 +65,7 @@ const power = computed(() => player.value ? calculatePower(player.value) : 0)
 
       <!-- AP gauge -->
       <div style="display:flex;align-items:center;gap:5px;">
-        <span style="font-size:7px;letter-spacing:0.15em;color:var(--color-text-dim);">AP</span>
+        <span style="font-size:9px;letter-spacing:0.15em;color:var(--color-text-dim);">AP</span>
         <span style="font-size:10px;font-weight:bold;" :style="{ color: apColor }">{{ ap }}</span>
         <div style="width:40px;height:3px;background:#0a1f0a;border-radius:1px;">
           <div

@@ -26,3 +26,6 @@ dist-ssr
 # Project
 dev.md
 .env
+
+# Local Netlify folder
+.netlify

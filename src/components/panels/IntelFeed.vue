@@ -37,7 +37,7 @@ watch(
     <div style="
       padding:6px 10px;
       border-bottom:1px solid var(--color-border);
-      font-size:7px;
+      font-size:9px;
       letter-spacing:0.25em;
       color:var(--color-text-dim);
       flex-shrink:0;

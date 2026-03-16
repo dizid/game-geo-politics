@@ -17,7 +17,7 @@ function selectTarget(id: string): void {
 
 <template>
   <div style="flex:1;overflow-y:auto;padding:6px;">
-    <div style="font-size:7px;letter-spacing:0.25em;color:var(--color-text-dim);padding:4px 2px 6px;">
+    <div style="font-size:9px;letter-spacing:0.25em;color:var(--color-text-dim);padding:4px 2px 6px;">
       FACTIONS
     </div>
     <div
@@ -32,7 +32,7 @@ function selectTarget(id: string): void {
 
       <!-- Name + bars -->
       <div style="flex:1;min-width:0;">
-        <div style="font-size:8px;letter-spacing:0.1em;color:var(--color-text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        <div style="font-size:9px;letter-spacing:0.1em;color:var(--color-text-bright);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           {{ faction.name }}
         </div>
         <!-- Mini stat bars -->

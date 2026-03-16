@@ -41,12 +41,12 @@ function labelForType(type: NewsType): string {
     <!-- Type label + turn + speaker -->
     <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
       <span
-        style="font-size:7px;letter-spacing:0.2em;font-weight:bold;"
+        style="font-size:8px;letter-spacing:0.2em;font-weight:bold;"
         :style="{ color: typeColors[item.type] }"
       >
         {{ item.speaker ? item.speaker.toUpperCase() : labelForType(item.type) }}
       </span>
-      <span style="font-size:7px;color:var(--color-text-dim);">T{{ item.turn }}</span>
+      <span style="font-size:8px;color:var(--color-text-dim);">T{{ item.turn }}</span>
     </div>
 
     <!-- Text -->

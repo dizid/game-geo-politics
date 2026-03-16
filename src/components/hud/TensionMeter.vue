@@ -22,7 +22,7 @@ const cfg = computed(() => stateConfig[state.value])
 <template>
   <div style="padding:6px 10px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-      <span style="font-size:7px;letter-spacing:0.2em;color:var(--color-text-dim);">WORLD TENSION</span>
+      <span style="font-size:9px;letter-spacing:0.2em;color:var(--color-text-dim);">WORLD TENSION</span>
       <span :class="cfg.color" style="font-size:9px;letter-spacing:0.15em;" :style="{ color: cfg.color }">
         {{ tension }}
       </span>
@@ -42,7 +42,7 @@ const cfg = computed(() => stateConfig[state.value])
       >
         {{ cfg.label }}
       </span>
-      <span style="font-size:7px;color:var(--color-text-dim);">{{ tension }}/100</span>
+      <span style="font-size:9px;color:var(--color-text-dim);">{{ tension }}/100</span>
     </div>
   </div>
 </template>

@@ -68,7 +68,7 @@ const chartOptions = computed(() => ({
       position: 'bottom' as const,
       labels: {
         color: '#4ade80',
-        font: { family: "'IBM Plex Mono', monospace", size: 7 },
+        font: { family: "'IBM Plex Mono', monospace", size: 9 },
         boxWidth: 8,
         padding: 8,
       },
@@ -87,8 +87,8 @@ const chartOptions = computed(() => ({
     x: {
       grid: { color: '#0a1f0a', lineWidth: 0.5 },
       ticks: {
-        color: '#0e3a14',
-        font: { family: "'IBM Plex Mono', monospace", size: 7 },
+        color: '#3a7a4a',
+        font: { family: "'IBM Plex Mono', monospace", size: 8 },
         maxRotation: 0,
       },
     },
@@ -97,8 +97,8 @@ const chartOptions = computed(() => ({
       max: 100,
       grid: { color: '#0a1f0a', lineWidth: 0.5 },
       ticks: {
-        color: '#0e3a14',
-        font: { family: "'IBM Plex Mono', monospace", size: 7 },
+        color: '#3a7a4a',
+        font: { family: "'IBM Plex Mono', monospace", size: 8 },
         stepSize: 10,
       },
     },
@@ -118,7 +118,7 @@ const chartOptions = computed(() => ({
     <div style="
       position:absolute;
       top:4px;left:8px;
-      font-size:6px;
+      font-size:8px;
       letter-spacing:0.22em;
       color:var(--color-text-dim);
       z-index:1;
