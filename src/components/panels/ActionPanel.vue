@@ -18,10 +18,20 @@ const visibleActions = computed(() => {
   return [...base, ...compound]
 })
 
+function isBlocked(actionId: string): boolean {
+  return gameStore.isActionBlocked(actionId)
+}
+
+function effectiveCost(actionId: string, baseCost: number): number {
+  return gameStore.getEffectiveCost(actionId, baseCost)
+}
+
 function isDisabled(actionId: ActionId | CompoundActionId): boolean {
+  if (isBlocked(actionId)) return true
   const action = ACTIONS.find(a => a.id === actionId) ?? COMPOUND_ACTIONS.find(a => a.id === actionId)
   if (!action) return true
-  if (ap.value < action.cost) return true
+  const cost = effectiveCost(actionId, action.cost)
+  if (ap.value < cost) return true
   if (!target.value) return true
   return gameStore.isOnCooldown(actionId as ActionId, target.value.id)
 }
@@ -41,14 +51,20 @@ function selectAction(id: ActionId | CompoundActionId): void {
   gameStore.setAction(id)
 }
 
-// Cost color: affordable = green, too expensive = red
-function costColor(cost: number): string {
+// Cost color: affordable = green, too expensive = red, blocked = dim
+function costColor(actionId: string, baseCost: number): string {
+  if (isBlocked(actionId)) return 'var(--color-text-dim)'
+  const cost = effectiveCost(actionId, baseCost)
   return ap.value >= cost ? '#4ade80' : '#ef4444'
+}
+
+function hasCostModifier(actionId: string, baseCost: number): boolean {
+  return effectiveCost(actionId, baseCost) !== baseCost
 }
 </script>
 
 <template>
-  <div style="padding:6px;border-top:1px solid var(--color-border);">
+  <div style="padding:6px;border-top:1px solid var(--color-border);overflow-y:auto;">
     <!-- Header -->
     <div style="font-size:9px;letter-spacing:0.22em;color:var(--color-text-dim);padding:4px 2px 6px;">
       <span v-if="target">ACTIONS vs {{ target.name.toUpperCase() }}</span>
@@ -80,6 +96,13 @@ function costColor(cost: number): string {
           >
             COMPOUND
           </span>
+          <!-- Blocked badge -->
+          <span
+            v-if="isBlocked(action.id)"
+            style="font-size:7px;letter-spacing:0.1em;color:#ef4444;border:1px solid #ef4444;padding:1px 4px;"
+          >
+            BLOCKED
+          </span>
         </div>
 
         <!-- Cost + cooldown -->
@@ -90,8 +113,11 @@ function costColor(cost: number): string {
           >
             CD:{{ cooldownRemaining(action.id as ActionId | CompoundActionId) }}
           </span>
-          <span style="font-size:8px;font-weight:bold;" :style="{ color: costColor(action.cost) }">
-            {{ action.cost }}AP
+          <span style="font-size:8px;font-weight:bold;" :style="{ color: costColor(action.id, action.cost) }">
+            <span v-if="hasCostModifier(action.id, action.cost)" style="text-decoration:line-through;opacity:0.5;margin-right:3px;">
+              {{ action.cost }}
+            </span>
+            {{ effectiveCost(action.id, action.cost) }}AP
           </span>
         </div>
       </div>
@@ -99,6 +125,9 @@ function costColor(cost: number): string {
       <!-- Description -->
       <div style="font-size:9px;color:var(--color-text-dim);margin-top:3px;line-height:1.5;">
         {{ action.desc }}
+        <span v-if="'requirement' in action" style="color:var(--color-accent-warn);font-size:8px;">
+          · {{ action.requirement }}
+        </span>
       </div>
     </div>
   </div>

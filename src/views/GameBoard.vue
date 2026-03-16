@@ -13,18 +13,22 @@ import PowerChart from '../components/charts/PowerChart.vue'
 import CoalitionPanel from '../components/coalition/CoalitionPanel.vue'
 import CoalitionProposal from '../components/coalition/CoalitionProposal.vue'
 import CrisisModal from '../components/crisis/CrisisModal.vue'
+import InterruptModal from '../components/hud/InterruptModal.vue'
+import DiplomaticInbox from '../components/diplomacy/DiplomaticInbox.vue'
+import StoryThreadPanel from '../components/narrative/StoryThreadPanel.vue'
+import CovertOpsPanel from '../components/covert/CovertOpsPanel.vue'
 import TutorialOverlay from '../components/tutorial/TutorialOverlay.vue'
-import type { CrisisEvent } from '../types/game'
+import { useEventStore } from '../stores/eventStore'
 
 const gameStore = useGameStore()
+const eventStore = useEventStore()
 
 const phase = computed(() => gameStore.phase)
 const showTutorial = ref(true)
 
-// Crisis state — in a real game this comes from the narrative engine
-// Here we expose a ref that the engine layer can populate
-const activeCrisis = ref<CrisisEvent | null>(null)
-const showCrisis = computed(() => phase.value === 'crisis' && activeCrisis.value !== null)
+// Crisis state — wired to eventStore's activeCrisis
+const showCrisis = computed(() => phase.value === 'crisis' && eventStore.activeCrisis !== null)
+const showInterrupt = computed(() => phase.value === 'interrupt' && gameStore.activeInterrupt !== null)
 
 function handleMapSelect(factionId: string): void {
   if (factionId !== gameStore.playerFactionId) {
@@ -32,8 +36,8 @@ function handleMapSelect(factionId: string): void {
   }
 }
 
-function handleCrisisResolved(_optionId: string): void {
-  activeCrisis.value = null
+function handleCrisisResolved(optionId: string): void {
+  eventStore.resolveCrisis(optionId)
   gameStore.setPhase('action')
 }
 </script>
@@ -103,7 +107,18 @@ function handleCrisisResolved(_optionId: string): void {
           <CoalitionPanel />
         </div>
 
-        <!-- Intel feed fills remainder -->
+        <!-- Story threads -->
+        <StoryThreadPanel />
+
+        <!-- Covert ops panel -->
+        <CovertOpsPanel />
+
+        <!-- Diplomatic inbox -->
+        <div style="flex:1;overflow:hidden;min-height:0;border-bottom:1px solid var(--color-border);">
+          <DiplomaticInbox />
+        </div>
+
+        <!-- Intel feed -->
         <div style="flex:1;overflow:hidden;min-height:0;">
           <IntelFeed />
         </div>
@@ -115,9 +130,15 @@ function handleCrisisResolved(_optionId: string): void {
 
     <!-- Crisis modal overlay -->
     <CrisisModal
-      v-if="showCrisis && activeCrisis"
-      :crisis="activeCrisis"
+      v-if="showCrisis && eventStore.activeCrisis"
+      :crisis="eventStore.activeCrisis"
       @resolved="handleCrisisResolved"
+    />
+
+    <!-- Phase interrupt overlay -->
+    <InterruptModal
+      v-if="showInterrupt && gameStore.activeInterrupt"
+      :interrupt="gameStore.activeInterrupt"
     />
 
     <!-- Coalition proposal overlay -->

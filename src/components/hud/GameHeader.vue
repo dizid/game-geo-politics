@@ -9,6 +9,7 @@ const player = computed(() => gameStore.playerFaction)
 const turn = computed(() => gameStore.turn)
 const ap = computed(() => gameStore.playerAP)
 const loading = computed(() => gameStore.loading)
+const turnModifier = computed(() => gameStore.activeTurnModifier)
 
 // Turn → year: game starts in 2025
 const year = computed(() => 2025 + turn.value - 1)
@@ -39,6 +40,14 @@ const power = computed(() => player.value ? calculatePower(player.value) : 0)
       </span>
       <!-- Loading spinner -->
       <span v-if="loading" class="spin" title="Transmitting..." />
+      <!-- Turn modifier badge -->
+      <span
+        v-if="turnModifier"
+        style="font-size:8px;letter-spacing:0.15em;padding:2px 8px;border:1px solid #f59e0b;color:#f59e0b;background:rgba(245,158,11,0.08);"
+        :title="turnModifier.description"
+      >
+        {{ turnModifier.icon }} {{ turnModifier.name }}
+      </span>
     </div>
 
     <!-- Right: Player faction stats -->

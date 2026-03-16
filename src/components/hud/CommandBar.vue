@@ -10,6 +10,7 @@ const loading = computed(() => gameStore.loading)
 const ap = computed(() => gameStore.playerAP)
 const canExecute = computed(() => gameStore.canExecute)
 const selectedActionId = computed(() => gameStore.selectedActionId)
+const actionsThisTurn = computed(() => gameStore.actionsThisTurn)
 
 const selectedAction = computed(() => {
   if (!selectedActionId.value) return null
@@ -20,16 +21,26 @@ const selectedAction = computed(() => {
   )
 })
 
+const effectiveCost = computed(() => {
+  if (!selectedAction.value) return 0
+  return gameStore.getEffectiveCost(selectedAction.value.id, selectedAction.value.cost)
+})
+
 const summaryText = computed(() => {
   if (loading.value) return 'TRANSMITTING...'
   if (!target.value) return 'SELECT TARGET FACTION ON MAP'
   if (!selectedAction.value) return `TARGET: ${target.value.name.toUpperCase()} — SELECT ACTION`
-  return `${selectedAction.value.label.toUpperCase()} → ${target.value.name.toUpperCase()} [${selectedAction.value.cost} AP]`
+  return `${selectedAction.value.label.toUpperCase()} → ${target.value.name.toUpperCase()} [${effectiveCost.value} AP]`
 })
 
 function handleExecute(): void {
   if (!canExecute.value || loading.value) return
   gameStore.executeAction()
+}
+
+function handleEndTurn(): void {
+  if (loading.value) return
+  gameStore.endTurn()
 }
 </script>
 
@@ -51,24 +62,40 @@ function handleExecute(): void {
       <span v-else>{{ summaryText }}</span>
     </div>
 
-    <!-- Turn + AP display -->
-    <div style="display:flex;gap:12px;flex-shrink:0;">
+    <!-- Turn + AP + Actions display -->
+    <div style="display:flex;gap:12px;flex-shrink:0;align-items:center;">
       <span style="font-size:9px;color:var(--color-text-dim);letter-spacing:0.12em;">
         T{{ gameStore.turn }}
+      </span>
+      <span v-if="actionsThisTurn > 0" style="font-size:8px;letter-spacing:0.1em;color:#f59e0b;">
+        ACT:{{ actionsThisTurn }}
       </span>
       <span style="font-size:8px;letter-spacing:0.12em;" :style="{ color: ap > 30 ? '#4ade80' : '#ef4444' }">
         AP:{{ ap }}
       </span>
     </div>
 
-    <!-- Execute button -->
-    <button
-      class="exec-btn"
-      :disabled="!canExecute || loading"
-      @click="handleExecute"
-    >
-      <span v-if="loading">TRANSMITTING</span>
-      <span v-else>EXECUTE</span>
-    </button>
+    <!-- Buttons -->
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <!-- Execute button -->
+      <button
+        class="exec-btn"
+        :disabled="!canExecute || loading"
+        @click="handleExecute"
+      >
+        <span v-if="loading">TRANSMITTING</span>
+        <span v-else>EXECUTE</span>
+      </button>
+
+      <!-- End Turn button -->
+      <button
+        class="exec-btn"
+        style="background:transparent;border-color:var(--color-text-dim);"
+        :disabled="loading"
+        @click="handleEndTurn"
+      >
+        END TURN
+      </button>
+    </div>
   </div>
 </template>

@@ -1,50 +1,88 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useGameStore } from '../stores/gameStore'
+import { useCoalitionStore } from '../stores/coalitionStore'
+import { useRelationshipStore } from '../stores/relationshipStore'
 import { calculatePower } from '../data/factions'
+import { checkVictory, checkDefeat } from '../engine/balance/victoryDetector'
+import type { GameState } from '../types/game'
 import PowerChart from '../components/charts/PowerChart.vue'
 import StatBar from '../components/common/StatBar.vue'
 
 const gameStore = useGameStore()
+const coalitionStore = useCoalitionStore()
+const relStore = useRelationshipStore()
 
 const player = computed(() => gameStore.playerFaction)
 
-// Determine win/loss and type from final state
-const isVictory = computed(() => {
-  if (!player.value) return false
-  const power = calculatePower(player.value)
-  const ds = gameStore.dominationStreak
-  const p = player.value
-  return (
-    (ds >= 5 && power >= 85) ||
-    (gameStore.turnsWithoutWar >= 10 && p.dip >= 80) ||
-    (gameStore.tradePartners.size >= 5 && p.eco >= 85) ||
-    (gameStore.actionsUsedOnFactions['propaganda']?.size >= 6 && p.inf >= 80)
-  )
-})
+// Build GameState for victory/defeat detector
+const gameState = computed<GameState>(() => ({
+  phase: gameStore.phase,
+  turn: gameStore.turn,
+  playerFactionId: gameStore.playerFactionId,
+  playerAP: gameStore.playerAP,
+  factions: gameStore.factions,
+  selectedTargetId: gameStore.selectedTargetId,
+  selectedActionId: gameStore.selectedActionId,
+  worldTension: gameStore.worldTension,
+  powerHistory: gameStore.powerHistory,
+  cooldowns: gameStore.cooldowns,
+  loading: gameStore.loading,
+  apiKey: gameStore.apiKey,
+  signatureUsed: gameStore.signatureUsed,
+  dominationStreak: gameStore.dominationStreak,
+  failedStateStreak: gameStore.failedStateStreak,
+  actionsUsedOnFactions: gameStore.actionsUsedOnFactions,
+  tradePartners: gameStore.tradePartners,
+  turnsWithoutWar: gameStore.turnsWithoutWar,
+  lowStatTurns: gameStore.lowStatTurns,
+}))
+
+// Use victoryDetector as single source of truth
+const victoryResult = computed(() =>
+  checkVictory(gameState.value, coalitionStore.coalitions, Object.values(relStore.relationships))
+)
+
+const defeatResult = computed(() => checkDefeat(gameState.value))
+
+const isVictory = computed(() => victoryResult.value?.won === true)
+
+const VICTORY_LABELS: Record<string, string> = {
+  domination: 'DOMINATION VICTORY',
+  diplomatic: 'DIPLOMATIC VICTORY',
+  economic: 'ECONOMIC VICTORY',
+  influence: 'INFLUENCE VICTORY',
+  underdog: 'UNDERDOG VICTORY',
+}
+
+const DEFEAT_LABELS: Record<string, string> = {
+  collapse: 'STRATEGIC COLLAPSE',
+  failed_state: 'FAILED STATE',
+  catastrophe: 'GLOBAL CATASTROPHE',
+}
 
 const victoryLabel = computed(() => {
-  if (!player.value) return ''
-  const p = player.value
-  if (gameStore.dominationStreak >= 5) return 'DOMINATION VICTORY'
-  if (gameStore.turnsWithoutWar >= 10 && p.dip >= 80) return 'DIPLOMATIC VICTORY'
-  if (gameStore.tradePartners.size >= 5 && p.eco >= 85) return 'ECONOMIC VICTORY'
-  if ((gameStore.actionsUsedOnFactions['propaganda']?.size ?? 0) >= 6 && p.inf >= 80) return 'INFLUENCE VICTORY'
+  if (victoryResult.value?.won) {
+    return VICTORY_LABELS[victoryResult.value.type] ?? 'STRATEGIC VICTORY'
+  }
   return 'STRATEGIC VICTORY'
 })
 
 const defeatLabel = computed(() => {
-  if (!player.value) return 'DEFEAT'
-  if (gameStore.failedStateStreak >= 3) return 'FAILED STATE'
-  if (gameStore.worldTension >= 100) return 'GLOBAL CATASTROPHE'
-  return 'STRATEGIC COLLAPSE'
+  if (defeatResult.value?.lost) {
+    return DEFEAT_LABELS[defeatResult.value.type] ?? 'DEFEAT'
+  }
+  return 'DEFEAT'
 })
 
 const outcomeNarrative = computed(() => {
-  if (isVictory.value) {
-    return `After ${gameStore.turn} turns of relentless strategic manoeuvring, ${player.value?.name} has emerged as the dominant force on the world stage. Your decisions have reshaped global alliances, redefined power balances, and etched your name into the annals of geopolitical history.`
+  if (isVictory.value && victoryResult.value) {
+    return victoryResult.value.message
   }
-  return `Despite your best efforts, ${player.value?.name} could not withstand the pressures of an unforgiving world. Internal weaknesses, international opposition, and a rapidly deteriorating global order brought your strategic vision to an early end after ${gameStore.turn} turns.`
+  if (defeatResult.value?.lost) {
+    return defeatResult.value.message
+  }
+  return `After ${gameStore.turn} turns, ${player.value?.name}'s strategic journey has come to an end.`
 })
 
 const power = computed(() => player.value ? calculatePower(player.value) : 0)

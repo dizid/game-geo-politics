@@ -122,6 +122,33 @@ export function decideAIAction(
     return { actionId: 'military', targetFactionId: militaryThreat.id }
   }
 
+  // ── Priority 2.5: Dynamic difficulty (rubber-banding) ────────────────────
+  if (playerFaction) {
+    const playerPower = calculatePower(playerFaction)
+    const avgPower = allFactions.reduce((sum, f) => sum + calculatePower(f), 0) / allFactions.length
+
+    // If player is far ahead: AI factions coordinate against them
+    if (playerPower > avgPower + 15 && Math.random() > 0.4) {
+      const isAggressive = faction.personality.aggression > 0.5
+      if (isAggressive) {
+        return { actionId: 'sanctions', targetFactionId: playerFactionId }
+      } else {
+        // Even peaceful factions start to push back
+        return { actionId: 'propaganda', targetFactionId: playerFactionId }
+      }
+    }
+
+    // If player is far behind: AI factions fight each other more
+    if (playerPower < avgPower - 15 && Math.random() > 0.5) {
+      const rivals = others.filter(f => f.id !== playerFactionId)
+      if (rivals.length > 0) {
+        const target = pickTarget(faction, rivals, relationships, true)
+        const preferredAction = getPreferredAction(faction.personality)
+        return { actionId: preferredAction, targetFactionId: target.id }
+      }
+    }
+  }
+
   // ── Priority 3: Stop player near victory ────────────────────────────────
   if (playerFaction) {
     const nearVictory = isNearVictory(playerFaction, allFactions, coalitions)

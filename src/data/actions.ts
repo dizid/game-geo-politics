@@ -139,10 +139,13 @@ export const COMPOUND_ACTIONS: CompoundAction[] = [
     desc: 'Sanctions + Info War combined strike',
     cost: 26,
     components: ['sanctions', 'propaganda'],
-    requirement: 'Intel on target in last 3 turns',
-    requirementCheck: (_state: GameState) => {
-      // Check if intel was used on target in last 3 turns
-      return true // Simplified — full check in actionResolver
+    requirement: 'Intel used on target previously',
+    requirementCheck: (state: GameState) => {
+      // Requires intel to have been used on the selected target at some point
+      const targetId = state.selectedTargetId
+      if (!targetId) return false
+      const intelTargets = state.actionsUsedOnFactions['intel']
+      return intelTargets ? intelTargets.has(targetId) : false
     },
     effects: {
       targetStatChanges: { eco: -8, inf: -6, dip: -5 },
@@ -158,9 +161,11 @@ export const COMPOUND_ACTIONS: CompoundAction[] = [
     desc: 'Diplomacy + Trade combined deal',
     cost: 20,
     components: ['diplomacy', 'trade'],
-    requirement: 'Relationship > 40',
-    requirementCheck: (_state: GameState) => {
-      return true // Simplified — full check in actionResolver
+    requirement: 'Player DIP ≥ 60',
+    requirementCheck: (state: GameState) => {
+      // Requires player DIP >= 60
+      const player = state.factions.find(f => f.id === state.playerFactionId)
+      return player ? player.dip >= 60 : false
     },
     effects: {
       targetStatChanges: { eco: 6, dip: 4 },
@@ -176,9 +181,11 @@ export const COMPOUND_ACTIONS: CompoundAction[] = [
     desc: 'Intel + Military covert strike',
     cost: 30,
     components: ['intel', 'military'],
-    requirement: '20% exposure risk',
-    requirementCheck: (_state: GameState) => {
-      return true // Always available if AP allows
+    requirement: 'Player MIL ≥ 50, 20% exposure risk',
+    requirementCheck: (state: GameState) => {
+      // Requires player MIL >= 50
+      const player = state.factions.find(f => f.id === state.playerFactionId)
+      return player ? player.mil >= 50 : false
     },
     effects: {
       targetStatChanges: { mil: -12, inf: -6 },

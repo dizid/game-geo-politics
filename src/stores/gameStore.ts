@@ -12,8 +12,16 @@ import type {
 } from '../types/game'
 import { FACTIONS, calculatePower } from '../data/factions'
 import { ACTIONS, COMPOUND_ACTIONS, getActionById, getCompoundActionById } from '../data/actions'
+import { type TurnModifier, rollTurnModifier } from '../data/turnModifiers'
+import { type PhaseInterrupt, rollPhaseInterrupt } from '../engine/events/phaseInterrupts'
 import { useNewsStore } from './newsStore'
 import { useRelationshipStore } from './relationshipStore'
+import { useEventStore } from './eventStore'
+import { useDiplomacyStore } from './diplomacyStore'
+import { useAgendaStore } from './agendaStore'
+import { useStoryStore } from './storyStore'
+import { useCovertStore } from './covertStore'
+import { saveGame } from '../engine/persistence/saveManager'
 
 export const useGameStore = defineStore('game', () => {
   // ─── State ───────────────────────────────────────────────────────────────
@@ -38,6 +46,12 @@ export const useGameStore = defineStore('game', () => {
   const tradePartners = ref<Set<string>>(new Set())
   const turnsWithoutWar = ref<number>(0)
   const lowStatTurns = ref<number>(0)
+  // Multi-action turn tracking
+  const actionsThisTurn = ref<number>(0)
+  // Turn modifier
+  const activeTurnModifier = ref<TurnModifier | null>(null)
+  // Active phase interrupt
+  const activeInterrupt = ref<PhaseInterrupt | null>(null)
 
   // ─── Getters ─────────────────────────────────────────────────────────────
 
@@ -85,6 +99,35 @@ export const useGameStore = defineStore('game', () => {
     if (!action) return false
 
     if (playerAP.value < action.cost) return false
+
+    // Check compound action requirements
+    if (compoundAction) {
+      const state: import('../types/game').GameState = {
+        phase: phase.value,
+        turn: turn.value,
+        playerFactionId: playerFactionId.value,
+        playerAP: playerAP.value,
+        factions: factions.value,
+        selectedTargetId: selectedTargetId.value,
+        selectedActionId: selectedActionId.value,
+        worldTension: worldTension.value,
+        powerHistory: powerHistory.value,
+        cooldowns: cooldowns.value,
+        loading: loading.value,
+        apiKey: apiKey.value,
+        signatureUsed: signatureUsed.value,
+        dominationStreak: dominationStreak.value,
+        failedStateStreak: failedStateStreak.value,
+        actionsUsedOnFactions: actionsUsedOnFactions.value,
+        tradePartners: tradePartners.value,
+        turnsWithoutWar: turnsWithoutWar.value,
+        lowStatTurns: lowStatTurns.value,
+      }
+      if (!compoundAction.requirementCheck(state)) return false
+    }
+
+    // Check if action is blocked by turn modifier
+    if (activeTurnModifier.value?.effects.actionBlocked?.includes(id)) return false
 
     // Check cooldown
     return !isOnCooldown(id, selectedTargetId.value)
@@ -145,6 +188,9 @@ export const useGameStore = defineStore('game', () => {
     tradePartners.value = new Set()
     turnsWithoutWar.value = 0
     lowStatTurns.value = 0
+    actionsThisTurn.value = 0
+    activeTurnModifier.value = null
+    activeInterrupt.value = null
 
     // Record initial power history
     recordPowerHistory()
@@ -162,6 +208,17 @@ export const useGameStore = defineStore('game', () => {
     if (meIndex !== -1) {
       factions.value[meIndex].eco = Math.min(100, factions.value[meIndex].eco + 2)
     }
+
+    // Reset diplomacy, agendas, stories
+    const diplomacyStore = useDiplomacyStore()
+    diplomacyStore.reset()
+    const agendaStore = useAgendaStore()
+    agendaStore.reset()
+    agendaStore.initAgendas(factionId)
+    const storyStore = useStoryStore()
+    storyStore.reset()
+    const covertStore = useCovertStore()
+    covertStore.reset()
 
     newsStore.clearAll()
     newsStore.addSystem('GEOPOLITICAL COMMAND INITIALISED — Turn 1 begins.', 1)
@@ -202,7 +259,14 @@ export const useGameStore = defineStore('game', () => {
     if (!baseAction && !compoundAction) return
 
     const effects = baseAction ? baseAction.effects : compoundAction!.effects
-    const cost = baseAction ? baseAction.cost : compoundAction!.cost
+    const baseCost = baseAction ? baseAction.cost : compoundAction!.cost
+
+    // Apply turn modifier to cost
+    let cost = baseCost
+    const mod = activeTurnModifier.value
+    if (mod?.effects.apCostMultiplier?.[actionId] !== undefined) {
+      cost = Math.round(baseCost * mod.effects.apCostMultiplier[actionId])
+    }
 
     // Deduct AP
     playerAP.value = Math.max(0, playerAP.value - cost)
@@ -215,15 +279,19 @@ export const useGameStore = defineStore('game', () => {
       applyStatChanges(playerFactionId.value, effects.selfStatChanges)
     }
 
-    // Update world tension
-    worldTension.value = Math.max(0, Math.min(100, worldTension.value + effects.tensionChange))
+    // Apply tension change (with modifier)
+    const tensionMult = mod?.effects.tensionMultiplier ?? 1
+    const tensionDelta = Math.round(effects.tensionChange * tensionMult)
+    worldTension.value = Math.max(0, Math.min(100, worldTension.value + tensionDelta))
 
-    // Update relationship
+    // Update relationship (with modifier)
+    const relMult = mod?.effects.relationshipMultiplier ?? 1
+    const relDelta = Math.round(effects.relationshipChange * relMult)
     if (playerFactionId.value) {
       relStore.updateRelationship(
         playerFactionId.value,
         targetId,
-        effects.relationshipChange,
+        relDelta,
         `${actionId} action on turn ${turn.value}`,
       )
     }
@@ -241,6 +309,12 @@ export const useGameStore = defineStore('game', () => {
       actionsUsedOnFactions.value[actionId].add(targetId)
     }
 
+    // Intel Op reveals faction agenda
+    if (actionId === 'intel') {
+      const agendaStore = useAgendaStore()
+      agendaStore.revealAgenda(targetId)
+    }
+
     // Track trade partners
     if (actionId === 'trade' || actionId === 'strategicPartnership') {
       tradePartners.value.add(targetId)
@@ -254,6 +328,9 @@ export const useGameStore = defineStore('game', () => {
     // Record power snapshot after action
     recordPowerHistory()
 
+    // Increment multi-action counter
+    actionsThisTurn.value += 1
+
     newsStore.addOutcome(
       `Action executed: ${actionId} → ${targetId} | AP remaining: ${playerAP.value}`,
       turn.value,
@@ -262,6 +339,69 @@ export const useGameStore = defineStore('game', () => {
     // Clear selection after execution
     selectedTargetId.value = null
     selectedActionId.value = null
+
+    // Roll for phase interrupt between actions
+    if (playerFactionId.value) {
+      const interrupt = rollPhaseInterrupt(
+        worldTension.value,
+        actionsThisTurn.value,
+        turn.value,
+        factions.value,
+        playerFactionId.value,
+      )
+      if (interrupt) {
+        activeInterrupt.value = interrupt
+        phase.value = 'interrupt'
+      }
+    }
+  }
+
+  // ─── Interrupt Resolution ───────────────────────────────────────────────
+
+  function resolveInterrupt(accepted: boolean): void {
+    const newsStore = useNewsStore()
+
+    if (!activeInterrupt.value) {
+      phase.value = 'action'
+      return
+    }
+
+    const interrupt = activeInterrupt.value
+
+    if (interrupt.choice && accepted) {
+      // Apply accept effects
+      const choice = interrupt.choice.accept
+      if (playerFactionId.value) {
+        applyStatChanges(playerFactionId.value, choice.effects)
+      }
+      playerAP.value = Math.max(0, playerAP.value - choice.apCost)
+      worldTension.value = Math.max(0, Math.min(100, worldTension.value + choice.tensionDelta))
+      newsStore.addOutcome(`${interrupt.headline}: Accepted — ${choice.label}`, turn.value)
+    } else if (interrupt.choice && !accepted) {
+      // Apply decline effects
+      const choice = interrupt.choice.decline
+      if (playerFactionId.value) {
+        applyStatChanges(playerFactionId.value, choice.effects)
+      }
+      worldTension.value = Math.max(0, Math.min(100, worldTension.value + choice.tensionDelta))
+      newsStore.addOutcome(`${interrupt.headline}: Declined`, turn.value)
+    } else {
+      // No choice — just acknowledge the effect
+      if (playerFactionId.value && Object.keys(interrupt.effects).length > 0) {
+        applyStatChanges(playerFactionId.value, interrupt.effects)
+      }
+      newsStore.addEvent(`${interrupt.headline}: ${interrupt.description}`, turn.value)
+    }
+
+    activeInterrupt.value = null
+    phase.value = 'action'
+  }
+
+  // ─── End Turn (explicit player action) ──────────────────────────────────
+
+  function endTurn(): void {
+    nextTurn()
+    phase.value = 'action'
   }
 
   // ─── Stat Application ─────────────────────────────────────────────────────
@@ -318,11 +458,18 @@ export const useGameStore = defineStore('game', () => {
   function nextTurn(): void {
     const newsStore = useNewsStore()
     const relStore = useRelationshipStore()
+    const eventStore = useEventStore()
 
     turn.value += 1
 
+    // Reset multi-action counter
+    actionsThisTurn.value = 0
+
     // Recover AP: +35 per turn, hard cap at 120
     playerAP.value = Math.min(120, playerAP.value + 35)
+
+    // Roll for turn modifier
+    activeTurnModifier.value = rollTurnModifier(turn.value)
 
     // Clear expired cooldowns
     clearExpiredCooldowns()
@@ -332,6 +479,35 @@ export const useGameStore = defineStore('game', () => {
 
     // Decay relationships
     relStore.decayRelationships(turn.value)
+
+    // Process any queued cascade events
+    eventStore.processCascades(turn.value)
+
+    // Check for scripted narrative beats
+    eventStore.checkScriptedBeat(turn.value)
+
+    // Generate random world events for this turn
+    eventStore.generateTurnEvents(turn.value, factions.value, tensionState.value)
+
+    // Diplomacy: tick ultimatums, schemes, expire messages, generate new messages
+    const diplomacyStore = useDiplomacyStore()
+    diplomacyStore.tickUltimatums()
+    diplomacyStore.tickSchemes()
+    diplomacyStore.expireMessages(turn.value)
+    if (playerFactionId.value) {
+      diplomacyStore.generateProceduralMessages(factions.value, playerFactionId.value, turn.value)
+    }
+
+    // Tick covert operations (exposure checks)
+    const covertStore = useCovertStore()
+    covertStore.tickOperations()
+
+    // Progress faction agendas and story threads
+    const agendaStore = useAgendaStore()
+    agendaStore.progressAgendas()
+    const storyStore = useStoryStore()
+    storyStore.progressThreads()
+    storyStore.checkForNewThreads()
 
     // Track consecutive turns without war
     turnsWithoutWar.value += 1
@@ -346,6 +522,9 @@ export const useGameStore = defineStore('game', () => {
     recordPowerHistory()
 
     newsStore.addSystem(`Turn ${turn.value} begins. AP: ${playerAP.value}`, turn.value)
+
+    // Auto-save at start of each turn
+    saveGame('auto')
   }
 
   // ─── Passive Abilities ────────────────────────────────────────────────────
@@ -418,6 +597,20 @@ export const useGameStore = defineStore('game', () => {
     return [...ACTIONS, ...COMPOUND_ACTIONS]
   }
 
+  /** Check if an action is blocked by the active turn modifier */
+  function isActionBlocked(actionId: string): boolean {
+    return activeTurnModifier.value?.effects.actionBlocked?.includes(actionId) ?? false
+  }
+
+  /** Get the effective AP cost for an action (after turn modifier) */
+  function getEffectiveCost(actionId: string, baseCost: number): number {
+    const mod = activeTurnModifier.value
+    if (mod?.effects.apCostMultiplier?.[actionId] !== undefined) {
+      return Math.round(baseCost * mod.effects.apCostMultiplier[actionId])
+    }
+    return baseCost
+  }
+
   return {
     // State refs
     phase,
@@ -439,6 +632,9 @@ export const useGameStore = defineStore('game', () => {
     tradePartners,
     turnsWithoutWar,
     lowStatTurns,
+    actionsThisTurn,
+    activeTurnModifier,
+    activeInterrupt,
     // Computed
     playerFaction,
     targetFaction,
@@ -451,10 +647,14 @@ export const useGameStore = defineStore('game', () => {
     setAction,
     setPhase,
     executeAction,
+    resolveInterrupt,
+    endTurn,
     applyStatChanges,
     applyAIStatChanges,
     nextTurn,
     isOnCooldown,
+    isActionBlocked,
+    getEffectiveCost,
     getAvailableActions,
     recordPowerHistory,
   }

@@ -15,6 +15,9 @@ const typeColors: Record<NewsType, string> = {
   error:    '#ef4444',
   crisis:   '#f97316',
   forecast: '#2dd4bf',
+  intel:    '#6366f1',
+  diplomacy: '#c084fc',
+  covert:   '#f472b6',
 }
 
 function labelForType(type: NewsType): string {
@@ -28,6 +31,9 @@ function labelForType(type: NewsType): string {
     error:    'ERROR',
     crisis:   'CRISIS',
     forecast: 'FORECAST',
+    intel:    'INTEL',
+    diplomacy: 'DIPLOMATIC',
+    covert:   'COVERT',
   }
   return labels[type]
 }

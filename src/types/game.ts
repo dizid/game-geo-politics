@@ -168,7 +168,7 @@ export interface CrisisOption {
 
 // ─── News Types ────────────────────────────────────────────────────────────
 
-export type NewsType = 'headline' | 'outcome' | 'response' | 'reaction' | 'event' | 'system' | 'error' | 'crisis' | 'forecast'
+export type NewsType = 'headline' | 'outcome' | 'response' | 'reaction' | 'event' | 'system' | 'error' | 'crisis' | 'forecast' | 'intel' | 'diplomacy' | 'covert'
 
 export interface NewsItem {
   type: NewsType
@@ -203,7 +203,7 @@ export interface VictoryRequirement {
 
 // ─── Turn Types ────────────────────────────────────────────────────────────
 
-export type GamePhase = 'select' | 'briefing' | 'crisis' | 'action' | 'resolution' | 'summary' | 'gameover'
+export type GamePhase = 'select' | 'briefing' | 'crisis' | 'action' | 'interrupt' | 'resolution' | 'summary' | 'gameover'
 export type TurnPhase = 'tutorial' | 'opening' | 'midgame' | 'endgame' | 'sudden_death'
 
 export interface TurnAction {
