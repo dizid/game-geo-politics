@@ -79,14 +79,33 @@ function selectFaction(id: string): void {
       />
     </div>
 
+    <!-- Game description -->
+    <div style="
+      max-width:640px;
+      text-align:center;
+      margin-bottom:20px;
+      padding:12px 16px;
+      border:1px solid var(--color-border);
+      background:var(--color-bg-panel);
+    ">
+      <div style="font-size:10px;line-height:1.7;color:var(--color-text-bright);margin-bottom:8px;">
+        Lead a world power through 20 turns of diplomacy, warfare, and intrigue.
+        Each turn, spend Action Points to sanction rivals, forge alliances, launch covert ops, or wage info war.
+        AI-driven opponents scheme, threaten, and betray.
+      </div>
+      <div style="font-size:9px;color:var(--color-text-dim);letter-spacing:0.12em;">
+        5 VICTORY PATHS · 10 FACTIONS · AI-GENERATED NARRATIVE · ~30 MIN PER GAME
+      </div>
+    </div>
+
     <!-- Select prompt -->
     <div style="
-      font-size:8px;
+      font-size:9px;
       letter-spacing:0.28em;
-      color:var(--color-text-dim);
+      color:#f59e0b;
       margin-bottom:18px;
     ">
-      SELECT FACTION TO COMMAND
+      ▼ SELECT YOUR FACTION TO BEGIN ▼
     </div>
 
     <!-- Faction grid -->

@@ -66,9 +66,9 @@ function hasCostModifier(actionId: string, baseCost: number): boolean {
 <template>
   <div style="padding:6px;border-top:1px solid var(--color-border);overflow-y:auto;">
     <!-- Header -->
-    <div style="font-size:9px;letter-spacing:0.22em;color:var(--color-text-dim);padding:4px 2px 6px;">
-      <span v-if="target">ACTIONS vs {{ target.name.toUpperCase() }}</span>
-      <span v-else>SELECT TARGET FIRST</span>
+    <div style="font-size:9px;letter-spacing:0.22em;padding:4px 2px 6px;">
+      <span v-if="target" style="color:var(--color-text-dim);">② PICK ACTION vs {{ target.name.toUpperCase() }}</span>
+      <span v-else style="color:var(--color-text-dim);opacity:0.5;">② PICK ACTION — select target first</span>
     </div>
 
     <!-- Action list -->

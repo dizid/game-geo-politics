@@ -28,9 +28,10 @@ const effectiveCost = computed(() => {
 
 const summaryText = computed(() => {
   if (loading.value) return 'TRANSMITTING...'
-  if (!target.value) return 'SELECT TARGET FACTION ON MAP'
-  if (!selectedAction.value) return `TARGET: ${target.value.name.toUpperCase()} — SELECT ACTION`
-  return `${selectedAction.value.label.toUpperCase()} → ${target.value.name.toUpperCase()} [${effectiveCost.value} AP]`
+  if (!target.value && actionsThisTurn.value === 0) return '① CLICK A FACTION ON THE LEFT TO TARGET THEM'
+  if (!target.value && actionsThisTurn.value > 0) return 'SELECT ANOTHER TARGET OR CLICK END TURN →'
+  if (!selectedAction.value) return `② TARGET: ${target.value!.name.toUpperCase()} — NOW PICK AN ACTION BELOW`
+  return `③ ${selectedAction.value.label.toUpperCase()} → ${target.value!.name.toUpperCase()} [${effectiveCost.value} AP] — HIT EXECUTE`
 })
 
 function handleExecute(): void {
@@ -80,17 +81,19 @@ function handleEndTurn(): void {
       <!-- Execute button -->
       <button
         class="exec-btn"
+        :class="{ pulse: canExecute && !loading }"
         :disabled="!canExecute || loading"
+        :style="canExecute && !loading ? 'box-shadow:0 0 12px rgba(74,222,128,0.3);' : ''"
         @click="handleExecute"
       >
         <span v-if="loading">TRANSMITTING</span>
-        <span v-else>EXECUTE</span>
+        <span v-else>③ EXECUTE</span>
       </button>
 
       <!-- End Turn button -->
       <button
         class="exec-btn"
-        style="background:transparent;border-color:var(--color-text-dim);"
+        :style="actionsThisTurn > 0 ? 'background:transparent;border-color:#f59e0b;color:#f59e0b;' : 'background:transparent;border-color:var(--color-text-dim);'"
         :disabled="loading"
         @click="handleEndTurn"
       >

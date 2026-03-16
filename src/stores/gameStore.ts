@@ -170,7 +170,7 @@ export const useGameStore = defineStore('game', () => {
     const newsStore = useNewsStore()
 
     // Reset all state
-    phase.value = 'briefing'
+    phase.value = 'action'
     turn.value = 1
     playerFactionId.value = factionId
     playerAP.value = 80

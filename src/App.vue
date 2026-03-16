@@ -13,7 +13,7 @@ const showApiKeyModal = ref(false)
 const phase = computed(() => gameStore.phase)
 
 const isPlayPhase = computed(() =>
-  ['briefing', 'crisis', 'action', 'resolution', 'summary'].includes(phase.value),
+  ['briefing', 'crisis', 'action', 'interrupt', 'resolution', 'summary'].includes(phase.value),
 )
 
 const STORAGE_KEY = 'geocmd_api_key'

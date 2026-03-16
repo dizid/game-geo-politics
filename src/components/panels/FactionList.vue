@@ -23,8 +23,9 @@ function getAgendaInfo(factionId: string) {
 
 <template>
   <div style="flex:1;overflow-y:auto;padding:6px;">
-    <div style="font-size:9px;letter-spacing:0.25em;color:var(--color-text-dim);padding:4px 2px 6px;">
-      FACTIONS
+    <div style="font-size:9px;letter-spacing:0.25em;padding:4px 2px 6px;display:flex;justify-content:space-between;">
+      <span style="color:var(--color-text-dim);">① SELECT TARGET</span>
+      <span v-if="gameStore.selectedTargetId" style="color:#4ade80;font-size:7px;">✓</span>
     </div>
     <div
       v-for="faction in otherFactions"
