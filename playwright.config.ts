@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: {
     command: 'npx vite --port 5199',
     url: 'http://localhost:5199',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 30000,
   },
 })
