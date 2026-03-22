@@ -9,6 +9,8 @@ import type {
   Faction,
   ActionCooldown,
   PowerHistoryEntry,
+  SignatureModifier,
+  FactionStats,
 } from '../types/game'
 import { FACTIONS, calculatePower } from '../data/factions'
 import { ACTIONS, COMPOUND_ACTIONS, getActionById, getCompoundActionById } from '../data/actions'
@@ -39,6 +41,7 @@ export const useGameStore = defineStore('game', () => {
   const loading = ref<boolean>(false)
   const apiKey = ref<string | null>(null)
   const signatureUsed = ref<boolean>(false)
+  const signatureModifiers = ref<SignatureModifier[]>([])
   const dominationStreak = ref<number>(0)
   const failedStateStreak = ref<number>(0)
   // Track which factions each action has been used on (for influence victory)
@@ -116,6 +119,7 @@ export const useGameStore = defineStore('game', () => {
         loading: loading.value,
         apiKey: apiKey.value,
         signatureUsed: signatureUsed.value,
+        signatureModifiers: signatureModifiers.value,
         dominationStreak: dominationStreak.value,
         failedStateStreak: failedStateStreak.value,
         actionsUsedOnFactions: actionsUsedOnFactions.value,
@@ -163,6 +167,17 @@ export const useGameStore = defineStore('game', () => {
     cooldowns.value = cooldowns.value.filter(cd => cd.expiresAtTurn > turn.value)
   }
 
+  // ─── Signature Ability Helpers ────────────────────────────────────────────
+
+  /** Multiply each stat delta by a multiplier (used for ASEAN diplomacy boost) */
+  function boostStats(stats: Partial<FactionStats>, multiplier: number): Partial<FactionStats> {
+    const result: Partial<FactionStats> = {}
+    for (const [key, val] of Object.entries(stats)) {
+      if (val !== undefined) result[key as keyof FactionStats] = Math.round(val * multiplier)
+    }
+    return result
+  }
+
   // ─── Game Init ────────────────────────────────────────────────────────────
 
   function startGame(factionId: string): void {
@@ -182,6 +197,7 @@ export const useGameStore = defineStore('game', () => {
     cooldowns.value = []
     loading.value = false
     signatureUsed.value = false
+    signatureModifiers.value = []
     dominationStreak.value = 0
     failedStateStreak.value = 0
     actionsUsedOnFactions.value = {}
@@ -258,8 +274,34 @@ export const useGameStore = defineStore('game', () => {
 
     if (!baseAction && !compoundAction) return
 
-    const effects = baseAction ? baseAction.effects : compoundAction!.effects
+    let effects = baseAction ? { ...baseAction.effects } : { ...compoundAction!.effects }
     const baseCost = baseAction ? baseAction.cost : compoundAction!.cost
+
+    // UK Soft Power: Info War generates INF instead of draining target's INF
+    if (actionId === 'propaganda') {
+      const invertMod = signatureModifiers.value.find(m => m.type === 'info_war_inverted')
+      if (invertMod) {
+        effects = {
+          targetStatChanges: {},
+          selfStatChanges: { inf: 5 },
+          tensionChange: 0,
+          relationshipChange: 0,
+        }
+      }
+    }
+
+    // ASEAN Quiet Diplomacy: +25% effectiveness on DIP-tagged actions
+    if (baseAction?.relevantStat === 'dip') {
+      const dipMod = signatureModifiers.value.find(m => m.type === 'diplomacy_boost_25pct')
+      if (dipMod) {
+        effects = {
+          targetStatChanges: boostStats(effects.targetStatChanges, 1.25),
+          selfStatChanges: boostStats(effects.selfStatChanges, 1.25),
+          tensionChange: Math.round(effects.tensionChange * 1.25),
+          relationshipChange: Math.round(effects.relationshipChange * 1.25),
+        }
+      }
+    }
 
     // Apply turn modifier to cost
     let cost = baseCost
@@ -354,6 +396,151 @@ export const useGameStore = defineStore('game', () => {
         phase.value = 'interrupt'
       }
     }
+  }
+
+  // ─── Signature Ability Activation ─────────────────────────────────────────
+
+  /**
+   * Activate the player faction's one-time signature ability.
+   * Some signatures require a target (China, Russia) — pass targetId for those.
+   */
+  function activateSignature(targetId?: string): void {
+    const newsStore = useNewsStore()
+    const agendaStore = useAgendaStore()
+
+    if (!playerFaction.value) return
+    if (playerFaction.value.signature.used) return
+
+    const factionId = playerFactionId.value!
+
+    // Factions that require a target
+    const needsTarget = ['china', 'russia'].includes(factionId)
+    if (needsTarget && !targetId) return
+
+    switch (factionId) {
+      case 'usa':
+        // Global Policeman: drop world tension by 25
+        worldTension.value = Math.max(0, worldTension.value - 25)
+        newsStore.addEvent(
+          'USA invokes GLOBAL POLICEMAN — military presence deployed globally, regional tensions suppressed.',
+          turn.value,
+        )
+        break
+
+      case 'china':
+        // Debt Diplomacy: target ECO -10, player INF +8, tension +5
+        if (targetId) {
+          applyStatChanges(targetId, { eco: -10 })
+          applyStatChanges(factionId, { inf: 8 })
+          worldTension.value = Math.min(100, worldTension.value + 5)
+          newsStore.addEvent(
+            `CHINA activates DEBT DIPLOMACY against ${factions.value.find(f => f.id === targetId)?.name ?? targetId} — debt trap triggered, Beijing\'s influence surges.`,
+            turn.value,
+          )
+        }
+        break
+
+      case 'eu':
+        // Enlargement: coalition proposals ignore relationship minimum for 3 turns
+        signatureModifiers.value.push({ type: 'half_coalition_cost', turnsRemaining: 3 })
+        newsStore.addEvent(
+          'EU activates ENLARGEMENT — coalition formation thresholds halved for 3 turns.',
+          turn.value,
+        )
+        break
+
+      case 'india':
+        // Strategic Autonomy: immune to hostile coalition formation for 5 turns
+        signatureModifiers.value.push({ type: 'coalition_immunity', turnsRemaining: 5 })
+        newsStore.addEvent(
+          'INDIA declares STRATEGIC AUTONOMY — immune to hostile coalition targeting for 5 turns.',
+          turn.value,
+        )
+        break
+
+      case 'uk':
+        // Soft Power: next 3 propaganda actions grant INF instead of costing it
+        signatureModifiers.value.push({ type: 'info_war_inverted', turnsRemaining: 3 })
+        newsStore.addEvent(
+          'UK activates SOFT POWER — Info War operations generate influence for 3 turns.',
+          turn.value,
+        )
+        break
+
+      case 'russia':
+        // Hybrid Warfare: apply both info war and intel effects to target
+        if (targetId) {
+          const targetName = factions.value.find(f => f.id === targetId)?.name ?? targetId
+          // Info war effect: target INF -8, player INF +5, tension +8
+          applyStatChanges(targetId, { inf: -8 })
+          applyStatChanges(factionId, { inf: 5 })
+          worldTension.value = Math.min(100, worldTension.value + 8)
+          // Intel effect: reveal target's agenda
+          agendaStore.revealAgenda(targetId)
+          // Track for influence victory
+          if (!actionsUsedOnFactions.value['propaganda']) {
+            actionsUsedOnFactions.value['propaganda'] = new Set()
+          }
+          actionsUsedOnFactions.value['propaganda'].add(targetId)
+          const relStore = useRelationshipStore()
+          relStore.updateRelationship(factionId, targetId, -15, 'Hybrid Warfare signature')
+          newsStore.addEvent(
+            `RUSSIA deploys HYBRID WARFARE against ${targetName} — information networks disrupted, intelligence extracted simultaneously.`,
+            turn.value,
+          )
+        }
+        break
+
+      case 'middleeast':
+        // Oil Shock: all other factions ECO -8, tension +15
+        for (const faction of factions.value) {
+          if (faction.id !== factionId) {
+            applyStatChanges(faction.id, { eco: -8 })
+          }
+        }
+        worldTension.value = Math.min(100, worldTension.value + 15)
+        newsStore.addEvent(
+          'MIDDLE EAST triggers OIL SHOCK — global energy prices spike, all economies suffer.',
+          turn.value,
+        )
+        break
+
+      case 'asean':
+        // Quiet Diplomacy: all DIP-tagged actions +25% effective for 3 turns
+        signatureModifiers.value.push({ type: 'diplomacy_boost_25pct', turnsRemaining: 3 })
+        newsStore.addEvent(
+          'ASEAN activates QUIET DIPLOMACY — diplomatic actions are 25% more effective for 3 turns.',
+          turn.value,
+        )
+        break
+
+      case 'latam':
+        // Monroe Doctrine Reversal: USA skips targeting player for 5 turns
+        signatureModifiers.value.push({ type: 'usa_blocked', turnsRemaining: 5 })
+        newsStore.addEvent(
+          'LATIN AMERICA invokes MONROE DOCTRINE REVERSAL — USA interference blocked for 5 turns.',
+          turn.value,
+        )
+        break
+
+      case 'africa':
+        // Resource Nationalism: economic crashes hit at half strength (permanent)
+        signatureModifiers.value.push({ type: 'crash_resistance', turnsRemaining: 999 })
+        newsStore.addEvent(
+          'AFRICAN UNION declares RESOURCE NATIONALISM — economic shocks permanently reduced by 50%.',
+          turn.value,
+        )
+        break
+    }
+
+    // Mark signature as used
+    const factionIdx = factions.value.findIndex(f => f.id === factionId)
+    if (factionIdx !== -1) {
+      factions.value[factionIdx].signature.used = true
+    }
+    signatureUsed.value = true
+
+    recordPowerHistory()
   }
 
   // ─── Interrupt Resolution ───────────────────────────────────────────────
@@ -473,6 +660,11 @@ export const useGameStore = defineStore('game', () => {
 
     // Clear expired cooldowns
     clearExpiredCooldowns()
+
+    // Decrement signature modifier turns (999 = permanent, never decremented)
+    signatureModifiers.value = signatureModifiers.value
+      .map(m => ({ ...m, turnsRemaining: m.turnsRemaining === 999 ? 999 : m.turnsRemaining - 1 }))
+      .filter(m => m.turnsRemaining > 0)
 
     // Apply passive abilities each turn
     applyPassives()
@@ -626,6 +818,7 @@ export const useGameStore = defineStore('game', () => {
     loading,
     apiKey,
     signatureUsed,
+    signatureModifiers,
     dominationStreak,
     failedStateStreak,
     actionsUsedOnFactions,
@@ -647,6 +840,7 @@ export const useGameStore = defineStore('game', () => {
     setAction,
     setPhase,
     executeAction,
+    activateSignature,
     resolveInterrupt,
     endTurn,
     applyStatChanges,

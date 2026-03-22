@@ -7,6 +7,7 @@ import type {
   NewsItem,
   GameEvent,
   GamePhase,
+  SignatureModifier,
 } from '../../types/game'
 import { useGameStore } from '../../stores/gameStore'
 import { useRelationshipStore } from '../../stores/relationshipStore'
@@ -30,6 +31,7 @@ interface SaveData {
     powerHistory: PowerHistoryEntry[]
     cooldowns: ActionCooldown[]
     signatureUsed: boolean
+    signatureModifiers: SignatureModifier[]
     dominationStreak: number
     failedStateStreak: number
     actionsUsedOnFactions: Record<string, string[]>
@@ -91,6 +93,7 @@ function captureState(label: string): SaveData {
       powerHistory: JSON.parse(JSON.stringify(gameStore.powerHistory)),
       cooldowns: JSON.parse(JSON.stringify(gameStore.cooldowns)),
       signatureUsed: gameStore.signatureUsed,
+      signatureModifiers: JSON.parse(JSON.stringify(gameStore.signatureModifiers)),
       dominationStreak: gameStore.dominationStreak,
       failedStateStreak: gameStore.failedStateStreak,
       actionsUsedOnFactions: serializeSets(gameStore.actionsUsedOnFactions),
@@ -152,6 +155,7 @@ export function loadGame(slot: 'auto' | number = 'auto'): boolean {
     gameStore.powerHistory = data.game.powerHistory
     gameStore.cooldowns = data.game.cooldowns
     gameStore.signatureUsed = data.game.signatureUsed
+    gameStore.signatureModifiers = data.game.signatureModifiers ?? []
     gameStore.dominationStreak = data.game.dominationStreak
     gameStore.failedStateStreak = data.game.failedStateStreak
     gameStore.actionsUsedOnFactions = deserializeSets(data.game.actionsUsedOnFactions)

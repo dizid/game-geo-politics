@@ -279,6 +279,22 @@ export interface ActionCooldown {
   expiresAtTurn: number
 }
 
+// ─── Signature Modifiers ───────────────────────────────────────────────────
+
+/** Active modifiers granted by one-time faction signature abilities */
+export interface SignatureModifier {
+  /** Which signature effect is active */
+  type:
+    | 'half_coalition_cost'    // EU: coalition proposals ignore relationship minimum
+    | 'coalition_immunity'     // India: immune to hostile coalition formation
+    | 'info_war_inverted'      // UK: propaganda actions grant INF instead of costing it
+    | 'diplomacy_boost_25pct'  // ASEAN: DIP-tagged actions are 25% more effective
+    | 'usa_blocked'            // Latin America: USA skips targeting player
+    | 'crash_resistance'       // African Union: economic crashes hit at half strength
+  /** Turns remaining (999 = permanent) */
+  turnsRemaining: number
+}
+
 // ─── Game State (root) ─────────────────────────────────────────────────────
 
 export interface GameState {
@@ -295,6 +311,7 @@ export interface GameState {
   loading: boolean
   apiKey: string | null
   signatureUsed: boolean
+  signatureModifiers: SignatureModifier[]
   dominationStreak: number // consecutive turns at Power >= 85
   failedStateStreak: number // consecutive turns at Power < 30
   actionsUsedOnFactions: Record<string, Set<string>> // for influence victory: track info war targets

@@ -30,6 +30,7 @@ const gameState = computed<GameState>(() => ({
   loading: gameStore.loading,
   apiKey: gameStore.apiKey,
   signatureUsed: gameStore.signatureUsed,
+  signatureModifiers: gameStore.signatureModifiers,
   dominationStreak: gameStore.dominationStreak,
   failedStateStreak: gameStore.failedStateStreak,
   actionsUsedOnFactions: gameStore.actionsUsedOnFactions,

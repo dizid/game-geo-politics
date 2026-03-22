@@ -11,6 +11,39 @@ const turn = computed(() => gameStore.turn)
 const ap = computed(() => gameStore.playerAP)
 const selectedActionId = computed(() => gameStore.selectedActionId)
 
+// Signature ability
+const playerFaction = computed(() => gameStore.playerFaction)
+const signature = computed(() => playerFaction.value?.signature ?? null)
+const sigUsed = computed(() => signature.value?.used ?? true)
+// Factions whose signature requires a target
+const sigNeedsTarget = computed(() => ['china', 'russia'].includes(gameStore.playerFactionId ?? ''))
+const sigCanActivate = computed(() => {
+  if (sigUsed.value) return false
+  if (sigNeedsTarget.value && !target.value) return false
+  return true
+})
+
+// Active signature modifier labels for display
+const activeModifierLabels = computed(() => {
+  return gameStore.signatureModifiers.map(m => {
+    const turns = m.turnsRemaining === 999 ? '∞' : `${m.turnsRemaining}T`
+    const labels: Record<string, string> = {
+      half_coalition_cost: `ENLARGEMENT (${turns})`,
+      coalition_immunity: `AUTONOMY (${turns})`,
+      info_war_inverted: `SOFT POWER (${turns})`,
+      diplomacy_boost_25pct: `QUIET DIPLOMACY (${turns})`,
+      usa_blocked: `MONROE REVERSAL (${turns})`,
+      crash_resistance: `RESOURCE NATIONALISM (${turns})`,
+    }
+    return labels[m.type] ?? m.type
+  })
+})
+
+function activateSig(): void {
+  if (!sigCanActivate.value) return
+  gameStore.activateSignature(target.value?.id)
+}
+
 // Show compound actions after turn 8
 const visibleActions = computed(() => {
   const base = ACTIONS
@@ -70,6 +103,52 @@ function hasCostModifier(actionId: string, baseCost: number): boolean {
       <span v-if="target" style="color:var(--color-text-dim);">② PICK ACTION vs {{ target.name.toUpperCase() }}</span>
       <span v-else style="color:var(--color-text-dim);opacity:0.5;">② PICK ACTION — select target first</span>
     </div>
+
+    <!-- Signature Ability -->
+    <div v-if="signature" style="margin-bottom:8px;">
+      <div style="font-size:8px;letter-spacing:0.2em;padding:4px 2px;color:#f59e0b;opacity:0.7;">◆ SIGNATURE ABILITY</div>
+      <div
+        style="border:1px solid #f59e0b;padding:6px 8px;cursor:pointer;transition:opacity 0.15s;"
+        :style="{
+          opacity: sigUsed ? 0.4 : 1,
+          borderColor: sigUsed ? '#666' : '#f59e0b',
+          cursor: sigCanActivate ? 'pointer' : 'not-allowed',
+        }"
+        @click="activateSig"
+      >
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:9px;letter-spacing:0.12em;color:#fbbf24;font-weight:bold;">
+            ◆ {{ signature.name }}
+          </span>
+          <span
+            v-if="sigUsed"
+            style="font-size:7px;letter-spacing:0.12em;padding:1px 5px;border:1px solid #666;color:#666;"
+          >USED</span>
+          <span
+            v-else-if="sigNeedsTarget && !target"
+            style="font-size:7px;letter-spacing:0.1em;color:#f59e0b;opacity:0.7;"
+          >SELECT TARGET</span>
+          <span
+            v-else
+            style="font-size:7px;letter-spacing:0.12em;padding:1px 5px;border:1px solid #f59e0b;color:#f59e0b;"
+          >ACTIVATE</span>
+        </div>
+        <div style="font-size:9px;color:var(--color-text-dim);margin-top:3px;line-height:1.5;">
+          {{ signature.description }}
+        </div>
+      </div>
+      <!-- Active modifier status -->
+      <div v-if="activeModifierLabels.length" style="margin-top:4px;">
+        <span
+          v-for="label in activeModifierLabels"
+          :key="label"
+          style="display:inline-block;font-size:7px;letter-spacing:0.1em;padding:2px 5px;border:1px solid #f59e0b;color:#f59e0b;margin-right:4px;margin-bottom:2px;"
+        >▶ {{ label }}</span>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div style="border-top:1px solid var(--color-border);margin-bottom:6px;opacity:0.4;"></div>
 
     <!-- Action list -->
     <div
