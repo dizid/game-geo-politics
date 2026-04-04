@@ -37,6 +37,7 @@ const gameState = computed<GameState>(() => ({
   tradePartners: gameStore.tradePartners,
   turnsWithoutWar: gameStore.turnsWithoutWar,
   lowStatTurns: gameStore.lowStatTurns,
+  difficulty: gameStore.difficulty,
 }))
 
 // Use victoryDetector as single source of truth

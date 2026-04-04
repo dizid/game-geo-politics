@@ -1,81 +1,45 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useGameStore } from '../../stores/gameStore'
-import { calculatePower, UNDERDOG_FACTIONS } from '../../data/factions'
-import type { VictoryProgress } from '../../types/game'
+import { useCoalitionStore } from '../../stores/coalitionStore'
+import { useRelationshipStore } from '../../stores/relationshipStore'
+import { getVictoryProgress } from '../../engine/balance/victoryDetector'
+import type { GameState } from '../../types/game'
 
 const gameStore = useGameStore()
+const coalitionStore = useCoalitionStore()
+const relStore = useRelationshipStore()
 const collapsed = ref(false)
 
-const player = computed(() => gameStore.playerFaction)
+// Build GameState for victoryDetector (single source of truth)
+const gameState = computed<GameState>(() => ({
+  phase: gameStore.phase,
+  turn: gameStore.turn,
+  playerFactionId: gameStore.playerFactionId,
+  playerAP: gameStore.playerAP,
+  factions: gameStore.factions,
+  selectedTargetId: gameStore.selectedTargetId,
+  selectedActionId: gameStore.selectedActionId,
+  worldTension: gameStore.worldTension,
+  powerHistory: gameStore.powerHistory,
+  cooldowns: gameStore.cooldowns,
+  loading: gameStore.loading,
+  apiKey: gameStore.apiKey,
+  signatureUsed: gameStore.signatureUsed,
+  signatureModifiers: gameStore.signatureModifiers,
+  dominationStreak: gameStore.dominationStreak,
+  failedStateStreak: gameStore.failedStateStreak,
+  actionsUsedOnFactions: gameStore.actionsUsedOnFactions,
+  tradePartners: gameStore.tradePartners,
+  turnsWithoutWar: gameStore.turnsWithoutWar,
+  lowStatTurns: gameStore.lowStatTurns,
+  difficulty: gameStore.difficulty,
+}))
 
-const victoryPaths = computed<VictoryProgress[]>(() => {
-  if (!player.value) return []
-  const p = player.value
-  const power = calculatePower(p)
-  const factions = gameStore.factions
-  const sortedByPower = [...factions].sort(
-    (a, b) => calculatePower(b) - calculatePower(a),
-  )
-  const rank = sortedByPower.findIndex(f => f.id === p.id) + 1
-  const tradeCount = gameStore.tradePartners.size
-  const infoWarTargets = gameStore.actionsUsedOnFactions['propaganda']?.size ?? 0
-  const isUnderdog = UNDERDOG_FACTIONS.includes(p.id)
-
-  return [
-    {
-      type: 'domination',
-      label: 'DOMINATION',
-      progress: Math.min(100, (gameStore.dominationStreak / 5) * 100),
-      available: true,
-      requirements: [
-        { label: 'Power ≥ 85', met: power >= 85, current: power, target: 85 },
-        { label: 'Maintain 5 turns', met: gameStore.dominationStreak >= 5, current: gameStore.dominationStreak, target: 5 },
-      ],
-    },
-    {
-      type: 'diplomatic',
-      label: 'DIPLOMATIC',
-      progress: Math.min(100, (gameStore.turnsWithoutWar / 10) * 100),
-      available: true,
-      requirements: [
-        { label: '10 turns peace', met: gameStore.turnsWithoutWar >= 10, current: gameStore.turnsWithoutWar, target: 10 },
-        { label: 'Rank #1 DIP', met: p.dip >= 80, current: p.dip, target: 80 },
-      ],
-    },
-    {
-      type: 'economic',
-      label: 'ECONOMIC',
-      progress: Math.min(100, (tradeCount / 5) * 100),
-      available: true,
-      requirements: [
-        { label: '5 trade partners', met: tradeCount >= 5, current: tradeCount, target: 5 },
-        { label: 'ECO ≥ 85', met: p.eco >= 85, current: p.eco, target: 85 },
-      ],
-    },
-    {
-      type: 'influence',
-      label: 'INFLUENCE',
-      progress: Math.min(100, (infoWarTargets / 6) * 100),
-      available: true,
-      requirements: [
-        { label: 'Info War on 6 factions', met: infoWarTargets >= 6, current: infoWarTargets, target: 6 },
-        { label: 'INF ≥ 80', met: p.inf >= 80, current: p.inf, target: 80 },
-      ],
-    },
-    {
-      type: 'underdog',
-      label: 'UNDERDOG',
-      progress: isUnderdog ? Math.min(100, (gameStore.lowStatTurns / 12) * 100) : 0,
-      available: isUnderdog,
-      requirements: [
-        { label: 'Start as bottom-4 faction', met: isUnderdog, current: isUnderdog ? 'YES' : 'NO', target: 'YES' },
-        { label: 'Survive 12 turns (no stat ≤25)', met: gameStore.lowStatTurns >= 12, current: gameStore.lowStatTurns, target: 12 },
-        { label: 'Reach rank #1 power', met: rank === 1, current: `#${rank}`, target: '#1' },
-      ],
-    },
-  ]
-})
+// Use victoryDetector as single source of truth — matches actual win conditions
+const victoryPaths = computed(() =>
+  getVictoryProgress(gameState.value, coalitionStore.coalitions, Object.values(relStore.relationships))
+)
 
 const bestPath = computed(() => {
   return [...victoryPaths.value]

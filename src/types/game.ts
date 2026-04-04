@@ -41,6 +41,7 @@ export interface FactionPersonality {
 
 export type ActionId = 'sanctions' | 'military' | 'diplomacy' | 'alliance' | 'trade' | 'aid' | 'intel' | 'propaganda'
 export type CompoundActionId = 'economicWarfare' | 'strategicPartnership' | 'shadowWar'
+export type ActionPosture = 'cooperate' | 'compete' | 'confront'
 
 export interface GameAction {
   id: ActionId
@@ -52,6 +53,8 @@ export interface GameAction {
   cooldownType: 'target' | 'global' | 'none'
   relevantStat: keyof FactionStats
   effects: ActionEffects
+  posture: ActionPosture // UI grouping: cooperate, compete, confront
+  unlockTurn: number // turn at which this action becomes available (progressive unlock)
 }
 
 export interface CompoundAction {
@@ -295,6 +298,10 @@ export interface SignatureModifier {
   turnsRemaining: number
 }
 
+// ─── Difficulty ────────────────────────────────────────────────────────────
+
+export type Difficulty = 'commander' | 'strategist'
+
 // ─── Game State (root) ─────────────────────────────────────────────────────
 
 export interface GameState {
@@ -318,4 +325,5 @@ export interface GameState {
   tradePartners: Set<string>
   turnsWithoutWar: number
   lowStatTurns: number // for underdog: turns survived without stat <= 25
+  difficulty: Difficulty
 }

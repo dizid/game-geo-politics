@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { FACTIONS, calculatePower } from '../data/factions'
+import { useGameStore } from '../stores/gameStore'
 import WorldMap from '../components/map/WorldMap.vue'
 import StatBar from '../components/common/StatBar.vue'
-import type { Faction } from '../types/game'
+import type { Faction, Difficulty } from '../types/game'
 
 const emit = defineEmits<{
   start: [factionId: string]
 }>()
 
+const gameStore = useGameStore()
 const hovered = ref<string | null>(null)
 
 const difficultyColor: Record<Faction['difficulty'], string> = {
@@ -18,6 +20,13 @@ const difficultyColor: Record<Faction['difficulty'], string> = {
   'Medium-Hard': '#f97316',
   'Hard':        '#ef4444',
   'Very Hard':   '#dc2626',
+}
+
+// Recommended factions for beginners (Easy / Medium-Easy)
+const RECOMMENDED_IDS = ['usa', 'china', 'eu']
+
+function selectDifficulty(d: Difficulty): void {
+  gameStore.difficulty = d
 }
 
 function selectFaction(id: string): void {
@@ -89,13 +98,73 @@ function selectFaction(id: string): void {
       background:var(--color-bg-panel);
     ">
       <div style="font-size:10px;line-height:1.7;color:var(--color-text-bright);margin-bottom:8px;">
-        Lead a world power through 20 turns of diplomacy, warfare, and intrigue.
+        Lead a world power through 15 turns of diplomacy, warfare, and intrigue.
         Each turn, spend Action Points to sanction rivals, forge alliances, launch covert ops, or wage info war.
         AI-driven opponents scheme, threaten, and betray.
       </div>
       <div style="font-size:9px;color:var(--color-text-dim);letter-spacing:0.12em;">
-        5 VICTORY PATHS · 10 FACTIONS · AI-GENERATED NARRATIVE · ~30 MIN PER GAME
+        5 VICTORY PATHS · 10 FACTIONS · AI-GENERATED NARRATIVE · ~15 MIN PER GAME
       </div>
+    </div>
+
+    <!-- Difficulty selector -->
+    <div style="
+      display:flex;
+      gap:8px;
+      margin-bottom:16px;
+      align-items:center;
+    ">
+      <span style="font-size:8px;letter-spacing:0.2em;color:var(--color-text-dim);margin-right:4px;">MODE:</span>
+      <button
+        style="
+          padding:5px 14px;
+          border:1px solid;
+          background:none;
+          font-family:var(--font-mono);
+          font-size:9px;
+          letter-spacing:0.15em;
+          cursor:pointer;
+          transition:all 0.15s;
+        "
+        :style="{
+          borderColor: gameStore.difficulty === 'commander' ? '#4ade80' : 'var(--color-border)',
+          color: gameStore.difficulty === 'commander' ? '#4ade80' : 'var(--color-text-dim)',
+          background: gameStore.difficulty === 'commander' ? 'rgba(74,222,128,0.08)' : 'transparent',
+        }"
+        title="Guided experience: actions unlock gradually, advisor hints, easier AI"
+        @click="selectDifficulty('commander')"
+      >
+        COMMANDER
+      </button>
+      <button
+        style="
+          padding:5px 14px;
+          border:1px solid;
+          background:none;
+          font-family:var(--font-mono);
+          font-size:9px;
+          letter-spacing:0.15em;
+          cursor:pointer;
+          transition:all 0.15s;
+        "
+        :style="{
+          borderColor: gameStore.difficulty === 'strategist' ? '#ef4444' : 'var(--color-border)',
+          color: gameStore.difficulty === 'strategist' ? '#ef4444' : 'var(--color-text-dim)',
+          background: gameStore.difficulty === 'strategist' ? 'rgba(239,68,68,0.08)' : 'transparent',
+        }"
+        title="Full complexity: all actions from turn 1, aggressive AI, harder victory"
+        @click="selectDifficulty('strategist')"
+      >
+        STRATEGIST
+      </button>
+    </div>
+    <div style="font-size:8px;color:var(--color-text-dim);margin-bottom:18px;max-width:500px;text-align:center;line-height:1.6;">
+      <template v-if="gameStore.difficulty === 'commander'">
+        Guided mode — actions unlock over time, advisor hints, gentler AI. Recommended for first game.
+      </template>
+      <template v-else>
+        Full complexity — all actions from turn 1, aggressive AI, harder victory conditions.
+      </template>
     </div>
 
     <!-- Select prompt -->
@@ -105,7 +174,7 @@ function selectFaction(id: string): void {
       color:#f59e0b;
       margin-bottom:18px;
     ">
-      ▼ SELECT YOUR FACTION TO BEGIN ▼
+      \u25BC SELECT YOUR FACTION TO BEGIN \u25BC
     </div>
 
     <!-- Faction grid -->
@@ -149,8 +218,8 @@ function selectFaction(id: string): void {
           </span>
         </div>
 
-        <!-- Difficulty badge -->
-        <div style="margin-bottom:10px;">
+        <!-- Difficulty + recommended badge -->
+        <div style="margin-bottom:10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
           <span style="
             font-size:7px;
             letter-spacing:0.18em;
@@ -160,6 +229,12 @@ function selectFaction(id: string): void {
           :style="{ color: difficultyColor[faction.difficulty] }"
           >
             {{ faction.difficulty.toUpperCase() }}
+          </span>
+          <span
+            v-if="RECOMMENDED_IDS.includes(faction.id)"
+            style="font-size:7px;letter-spacing:0.12em;padding:2px 6px;border:1px solid #4ade80;color:#4ade80;background:rgba(74,222,128,0.06);"
+          >
+            RECOMMENDED
           </span>
         </div>
 
@@ -196,7 +271,7 @@ function selectFaction(id: string): void {
       text-align:center;
       line-height:2;
     ">
-      GEOPOLITICAL COMMAND SYSTEM · CLASSIFIED · 20 TURNS · AI-DRIVEN NARRATIVE
+      GEOPOLITICAL COMMAND SYSTEM · CLASSIFIED · 15 TURNS · AI-DRIVEN NARRATIVE
     </div>
   </div>
 </template>

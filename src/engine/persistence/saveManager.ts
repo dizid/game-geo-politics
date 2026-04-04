@@ -8,6 +8,7 @@ import type {
   GameEvent,
   GamePhase,
   SignatureModifier,
+  Difficulty,
 } from '../../types/game'
 import { useGameStore } from '../../stores/gameStore'
 import { useRelationshipStore } from '../../stores/relationshipStore'
@@ -38,6 +39,7 @@ interface SaveData {
     tradePartners: string[]
     turnsWithoutWar: number
     lowStatTurns: number
+    difficulty: Difficulty
   }
   relationships: Record<string, FactionRelationship>
   coalitions: Coalition[]
@@ -100,6 +102,7 @@ function captureState(label: string): SaveData {
       tradePartners: Array.from(gameStore.tradePartners),
       turnsWithoutWar: gameStore.turnsWithoutWar,
       lowStatTurns: gameStore.lowStatTurns,
+      difficulty: gameStore.difficulty,
     },
     relationships: JSON.parse(JSON.stringify(relStore.relationships)),
     coalitions: JSON.parse(JSON.stringify(coalitionStore.coalitions)),

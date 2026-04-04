@@ -1,15 +1,26 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useGameStore } from './stores/gameStore'
+import { useAudio } from './composables/useAudio'
 import ScanlineOverlay from './components/common/ScanlineOverlay.vue'
+import ScreenEffectsLayer from './components/common/ScreenEffectsLayer.vue'
 import ApiKeyModal from './components/settings/ApiKeyModal.vue'
 import FactionSelect from './views/FactionSelect.vue'
 import GameBoard from './views/GameBoard.vue'
 import GameOver from './views/GameOver.vue'
 
 const gameStore = useGameStore()
+const { initOnGesture } = useAudio()
 
 const showApiKeyModal = ref(false)
+const audioInitialized = ref(false)
+
+// Initialize audio on first user interaction (browser autoplay policy)
+function handleFirstInteraction(): void {
+  if (audioInitialized.value) return
+  initOnGesture()
+  audioInitialized.value = true
+}
 const phase = computed(() => gameStore.phase)
 
 const isPlayPhase = computed(() =>
@@ -66,19 +77,22 @@ function handleApiKeyClose(): void {
     ⚙
   </button>
 
-  <!-- Phase router -->
-  <FactionSelect
-    v-if="phase === 'select'"
-    @start="handleStart"
-  />
+  <!-- Screen effects (shake, flash, tension vignette, scanline wipe) -->
+  <ScreenEffectsLayer @click.once="handleFirstInteraction">
+    <!-- Phase router -->
+    <FactionSelect
+      v-if="phase === 'select'"
+      @start="handleStart"
+    />
 
-  <GameBoard
-    v-else-if="isPlayPhase"
-  />
+    <GameBoard
+      v-else-if="isPlayPhase"
+    />
 
-  <GameOver
-    v-else-if="phase === 'gameover'"
-  />
+    <GameOver
+      v-else-if="phase === 'gameover'"
+    />
+  </ScreenEffectsLayer>
 
   <!-- API key modal -->
   <ApiKeyModal

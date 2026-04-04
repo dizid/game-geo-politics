@@ -1,0 +1,200 @@
+/* ─── Game Feel Animations ─────────────────────────────────────────────────── */
+
+/* Screen shake — triggered by military/crisis actions */
+@keyframes shake-light {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, -1px); }
+  40% { transform: translate(1px, 2px); }
+  60% { transform: translate(-1px, 1px); }
+  80% { transform: translate(2px, -1px); }
+}
+
+@keyframes shake-medium {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-3px, -2px); }
+  20% { transform: translate(2px, 3px); }
+  30% { transform: translate(-3px, 1px); }
+  40% { transform: translate(1px, -2px); }
+  50% { transform: translate(-1px, 2px); }
+  60% { transform: translate(3px, -1px); }
+  70% { transform: translate(-2px, 3px); }
+  80% { transform: translate(2px, -2px); }
+  90% { transform: translate(-1px, 1px); }
+}
+
+@keyframes shake-heavy {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-4px, -3px); }
+  20% { transform: translate(3px, 4px); }
+  30% { transform: translate(-4px, 2px); }
+  40% { transform: translate(2px, -3px); }
+  50% { transform: translate(-2px, 3px); }
+  60% { transform: translate(4px, -2px); }
+  70% { transform: translate(-3px, 4px); }
+  80% { transform: translate(3px, -3px); }
+  90% { transform: translate(-2px, 2px); }
+}
+
+.shake-light { animation: shake-light 0.2s ease-in-out; }
+.shake-medium { animation: shake-medium 0.3s ease-in-out; }
+.shake-heavy { animation: shake-heavy 0.4s ease-in-out; }
+
+/* Flash overlays — brief color flash on action execution */
+@keyframes flash-fade {
+  0% { opacity: var(--flash-intensity, 0.25); }
+  100% { opacity: 0; }
+}
+
+.flash-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  animation: flash-fade 0.25s ease-out forwards;
+}
+
+.flash-red { background: #ef4444; --flash-intensity: 0.2; }
+.flash-green { background: #4ade80; --flash-intensity: 0.15; }
+.flash-orange { background: #f97316; --flash-intensity: 0.18; }
+.flash-blue { background: #60a5fa; --flash-intensity: 0.12; }
+.flash-purple { background: #c084fc; --flash-intensity: 0.12; }
+
+/* Stat number change animations */
+@keyframes stat-increase {
+  0% { color: #4ade80; transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+@keyframes stat-decrease {
+  0% { color: #ef4444; transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+
+.stat-up { animation: stat-increase 0.5s ease-out; }
+.stat-down { animation: stat-decrease 0.5s ease-out; }
+
+/* Slide-in for notifications and news items */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.slide-in-right { animation: slide-in-right 0.3s ease-out; }
+.slide-in-left { animation: slide-in-left 0.3s ease-out; }
+.slide-in-up { animation: slide-in-up 0.3s ease-out; }
+
+/* Map region impact pulse */
+@keyframes region-impact {
+  0% { fill-opacity: 0.9; stroke-width: 2; }
+  50% { fill-opacity: 0.4; stroke-width: 1; }
+  100% { fill-opacity: var(--base-opacity, 0.25); stroke-width: 0.5; }
+}
+
+.region-impact { animation: region-impact 0.6s ease-out; }
+
+/* Victory glitch text effect */
+@keyframes glitch {
+  0%, 100% { text-shadow: 0 0 40px currentColor; }
+  20% { text-shadow: -3px 0 #ef4444, 3px 0 #60a5fa; }
+  40% { text-shadow: 3px 0 #ef4444, -3px 0 #60a5fa; }
+  60% { text-shadow: -2px 0 #4ade80, 2px 0 #c084fc; }
+  80% { text-shadow: 2px 0 #4ade80, -2px 0 #c084fc; }
+}
+
+.glitch-text { animation: glitch 1.5s ease-in-out infinite; }
+
+/* Turn transition scanline wipe */
+@keyframes scanline-wipe {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(100vh); }
+}
+
+.scanline-wipe {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    rgba(74, 222, 128, 0.15) 48%,
+    rgba(74, 222, 128, 0.4) 50%,
+    rgba(74, 222, 128, 0.15) 52%,
+    transparent 100%
+  );
+  animation: scanline-wipe 0.4s ease-in-out forwards;
+}
+
+/* Tension vignette — intensifies at screen edges as tension rises */
+.tension-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9996;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(239, 68, 68, var(--tension-opacity, 0)) 100%
+  );
+  transition: opacity 2s ease;
+}
+
+/* Toast notification */
+@keyframes toast-in {
+  from { transform: translateY(-10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-10px); }
+}
+
+.toast-enter { animation: toast-in 0.2s ease-out; }
+.toast-leave { animation: toast-out 0.2s ease-in; }
+
+/* Posture unlock notification */
+@keyframes unlock-flash {
+  0% { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.4); }
+  100% { border-color: var(--color-border); box-shadow: none; }
+}
+
+.unlock-flash { animation: unlock-flash 1.5s ease-out; }
+
+/* Particle — for victory celebration */
+@keyframes particle-rise {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-100px) scale(0); opacity: 0; }
+}
+
+/* Reduced motion: disable most animations */
+@media (prefers-reduced-motion: reduce) {
+  .shake-light,
+  .shake-medium,
+  .shake-heavy,
+  .glitch-text,
+  .scanline-wipe,
+  .region-impact {
+    animation: none !important;
+  }
+
+  .flash-overlay {
+    animation-duration: 0.1s !important;
+  }
+
+  .slide-in-right,
+  .slide-in-left,
+  .slide-in-up {
+    animation-duration: 0.1s !important;
+  }
+}

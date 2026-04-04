@@ -278,3 +278,80 @@ body {
   color: var(--color-text-dim);
   margin-bottom: 6px;
 }
+
+/* ─── Mobile tab bar ─────────────────────────────────────────────────────── */
+.mobile-tabs {
+  display: flex;
+  height: 48px;
+  flex-shrink: 0;
+  background: var(--color-bg-panel);
+  border-top: 1px solid var(--color-border);
+}
+
+.mobile-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.12s;
+  /* Ensure 44px+ touch target (bar is 48px) */
+  min-height: 44px;
+}
+
+.mobile-tab-btn:last-child {
+  border-right: none;
+}
+
+.mobile-tab-btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.mobile-tab-btn.active {
+  color: var(--color-text-bright);
+  background: rgba(74, 222, 128, 0.07);
+  border-top: 2px solid #4ade80;
+}
+
+/* ─── Responsive touch targets ───────────────────────────────────────────── */
+@media (max-width: 767px) {
+  /* Ensure faction rows are at least 44px tall for touch */
+  .faction-row {
+    padding: 10px 10px;
+    min-height: 44px;
+  }
+
+  /* Action buttons: full touch target */
+  .action-btn {
+    padding: 10px;
+    min-height: 44px;
+  }
+
+  /* Exec button: full width on mobile */
+  .exec-btn {
+    width: 100%;
+    padding: 12px;
+    min-height: 44px;
+  }
+
+  /* Slightly larger news item text for readability */
+  .news-item {
+    font-size: 11px;
+  }
+}
+
+/* ─── Desktop font floor ─────────────────────────────────────────────────── */
+@media (min-width: 1024px) {
+  /* Lift the floor from 7-8px to 11px for legibility */
+  body {
+    font-size: 11px;
+  }
+}

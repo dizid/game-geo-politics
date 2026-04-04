@@ -11,6 +11,7 @@ import type {
   PowerHistoryEntry,
   SignatureModifier,
   FactionStats,
+  Difficulty,
 } from '../types/game'
 import { FACTIONS, calculatePower } from '../data/factions'
 import { ACTIONS, COMPOUND_ACTIONS, getActionById, getCompoundActionById } from '../data/actions'
@@ -51,10 +52,20 @@ export const useGameStore = defineStore('game', () => {
   const lowStatTurns = ref<number>(0)
   // Multi-action turn tracking
   const actionsThisTurn = ref<number>(0)
+  // Last executed action ID (for visual/audio feedback)
+  const lastExecutedAction = ref<string | null>(null)
   // Turn modifier
   const activeTurnModifier = ref<TurnModifier | null>(null)
   // Active phase interrupt
   const activeInterrupt = ref<PhaseInterrupt | null>(null)
+  // Difficulty mode
+  const difficulty = ref<Difficulty>('commander')
+
+  // ─── Game Constants (vary by difficulty) ─────────────────────────────────
+  const MAX_TURNS = 15
+  const AP_START = computed(() => difficulty.value === 'commander' ? 60 : 80)
+  const AP_RECOVERY = computed(() => difficulty.value === 'commander' ? 30 : 35)
+  const AP_CAP = computed(() => difficulty.value === 'commander' ? 100 : 120)
 
   // ─── Getters ─────────────────────────────────────────────────────────────
 
@@ -126,6 +137,7 @@ export const useGameStore = defineStore('game', () => {
         tradePartners: tradePartners.value,
         turnsWithoutWar: turnsWithoutWar.value,
         lowStatTurns: lowStatTurns.value,
+        difficulty: difficulty.value,
       }
       if (!compoundAction.requirementCheck(state)) return false
     }
@@ -188,7 +200,7 @@ export const useGameStore = defineStore('game', () => {
     phase.value = 'action'
     turn.value = 1
     playerFactionId.value = factionId
-    playerAP.value = 80
+    playerAP.value = AP_START.value
     factions.value = structuredClone(FACTIONS)
     selectedTargetId.value = null
     selectedActionId.value = null
@@ -205,6 +217,7 @@ export const useGameStore = defineStore('game', () => {
     turnsWithoutWar.value = 0
     lowStatTurns.value = 0
     actionsThisTurn.value = 0
+    lastExecutedAction.value = null
     activeTurnModifier.value = null
     activeInterrupt.value = null
 
@@ -250,6 +263,11 @@ export const useGameStore = defineStore('game', () => {
     selectedActionId.value = actionId
   }
 
+  function clearSelection(): void {
+    selectedTargetId.value = null
+    selectedActionId.value = null
+  }
+
   function setPhase(newPhase: GamePhase): void {
     phase.value = newPhase
   }
@@ -266,6 +284,7 @@ export const useGameStore = defineStore('game', () => {
 
     const actionId = selectedActionId.value!
     const targetId = selectedTargetId.value!
+    lastExecutedAction.value = actionId
     const newsStore = useNewsStore()
     const relStore = useRelationshipStore()
 
@@ -649,11 +668,18 @@ export const useGameStore = defineStore('game', () => {
 
     turn.value += 1
 
+    // 15-turn hard cap — trigger end-of-game resolution
+    if (turn.value > MAX_TURNS) {
+      phase.value = 'gameover'
+      return
+    }
+
     // Reset multi-action counter
     actionsThisTurn.value = 0
+    lastExecutedAction.value = null
 
-    // Recover AP: +35 per turn, hard cap at 120
-    playerAP.value = Math.min(120, playerAP.value + 35)
+    // Recover AP (scales with difficulty)
+    playerAP.value = Math.min(AP_CAP.value, playerAP.value + AP_RECOVERY.value)
 
     // Roll for turn modifier
     activeTurnModifier.value = rollTurnModifier(turn.value)
@@ -826,8 +852,14 @@ export const useGameStore = defineStore('game', () => {
     turnsWithoutWar,
     lowStatTurns,
     actionsThisTurn,
+    lastExecutedAction,
     activeTurnModifier,
     activeInterrupt,
+    difficulty,
+    MAX_TURNS,
+    AP_START,
+    AP_RECOVERY,
+    AP_CAP,
     // Computed
     playerFaction,
     targetFaction,
@@ -838,6 +870,7 @@ export const useGameStore = defineStore('game', () => {
     startGame,
     setTarget,
     setAction,
+    clearSelection,
     setPhase,
     executeAction,
     activateSignature,
